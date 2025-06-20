@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,6 +63,11 @@ const Index = () => {
       name: "EntreLife",
       description: "General entrepreneurship and business development track",
       color: "bg-purple-100 text-purple-800"
+    },
+    {
+      name: "Job Card (All Categories)",
+      description: "Single registration for comprehensive access to all program categories and benefits",
+      color: "bg-indigo-100 text-indigo-800"
     }
   ];
 
@@ -171,11 +175,20 @@ const Index = () => {
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{category.name}</CardTitle>
-                        <Badge className={category.color}>Track {index + 1}</Badge>
+                        <Badge className={category.color}>
+                          {category.name === "Job Card (All Categories)" ? "Special" : `Track ${index + 1}`}
+                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <CardDescription>{category.description}</CardDescription>
+                      {category.name === "Job Card (All Categories)" && (
+                        <div className="mt-3 p-2 bg-indigo-50 rounded-lg">
+                          <p className="text-xs text-indigo-700 font-medium">
+                            🌟 Recommended: Get access to all categories with a single registration!
+                          </p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

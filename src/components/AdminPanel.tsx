@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface Registration {
@@ -34,6 +34,7 @@ const AdminPanel = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<string | null>(null);
 
   const categories = [
     { value: "pennyekart-free", label: "Pennyekart Free Registration" },
@@ -41,7 +42,8 @@ const AdminPanel = () => {
     { value: "farmelife", label: "FarmeLife" },
     { value: "foodelife", label: "FoodeLife" },
     { value: "organelife", label: "OrganeLife" },
-    { value: "entrelife", label: "EntreLife" }
+    { value: "entrelife", label: "EntreLife" },
+    { value: "job-card", label: "Job Card (All Categories)" }
   ];
 
   // Load registrations from localStorage
@@ -132,6 +134,89 @@ const AdminPanel = () => {
     localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
   };
 
+  const exportToXML = (data: Registration[], filename: string) => {
+    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<registrations>
+${data.map(reg => `  <registration>
+    <id>${reg.id}</id>
+    <fullName>${reg.fullName}</fullName>
+    <mobileNumber>${reg.mobileNumber}</mobileNumber>
+    <whatsappNumber>${reg.whatsappNumber}</whatsappNumber>
+    <address>${reg.address}</address>
+    <panchayathDetails>${reg.panchayathDetails}</panchayathDetails>
+    <category>${reg.category}</category>
+    <status>${reg.status}</status>
+    <submittedAt>${reg.submittedAt}</submittedAt>
+    ${reg.approvedAt ? `<approvedAt>${reg.approvedAt}</approvedAt>` : ''}
+    ${reg.uniqueId ? `<uniqueId>${reg.uniqueId}</uniqueId>` : ''}
+  </registration>`).join('\n')}
+</registrations>`;
+
+    const blob = new Blob([xmlContent], { type: 'application/xml' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportToPDF = (data: Registration[], filename: string) => {
+    // Simple text-based PDF export (for a real PDF, you'd use a library like jsPDF)
+    const content = `SEDP Registration Report
+Generated: ${new Date().toLocaleString()}
+
+${data.map((reg, index) => `
+${index + 1}. ${reg.fullName}
+   Mobile: ${reg.mobileNumber}
+   WhatsApp: ${reg.whatsappNumber}
+   Address: ${reg.address}
+   Panchayath: ${reg.panchayathDetails}
+   Category: ${categories.find(c => c.value === reg.category)?.label}
+   Status: ${reg.status}
+   Submitted: ${new Date(reg.submittedAt).toLocaleDateString()}
+   ${reg.uniqueId ? `Unique ID: ${reg.uniqueId}` : ''}
+`).join('\n')}`;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename.replace('.pdf', '.txt');
+    link.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export Complete",
+      description: "File exported as text format (PDF library not included)",
+    });
+  };
+
+  const getCategoryRegistrations = (categoryValue: string) => {
+    return registrations.filter(reg => reg.category === categoryValue);
+  };
+
+  const getPanchayathBreakdown = () => {
+    const panchayathMap = new Map<string, Registration[]>();
+    
+    registrations.forEach(reg => {
+      const panchayath = reg.panchayathDetails.trim();
+      if (!panchayathMap.has(panchayath)) {
+        panchayathMap.set(panchayath, []);
+      }
+      panchayathMap.get(panchayath)!.push(reg);
+    });
+
+    return Array.from(panchayathMap.entries()).map(([panchayath, regs]) => ({
+      panchayath,
+      totalRegistrations: regs.length,
+      pendingCount: regs.filter(r => r.status === 'pending').length,
+      approvedCount: regs.filter(r => r.status === 'approved').length,
+      rejectedCount: regs.filter(r => r.status === 'rejected').length,
+      registrations: regs
+    }));
+  };
+
   const getStats = () => {
     const total = registrations.length;
     const pending = registrations.filter(r => r.status === 'pending').length;
@@ -193,6 +278,7 @@ const AdminPanel = () => {
 
   const stats = getStats();
   const categoryStats = getCategoryStats();
+  const panchayathBreakdown = getPanchayathBreakdown();
 
   return (
     <div className="space-y-6">
@@ -259,6 +345,7 @@ const AdminPanel = () => {
         <TabsList>
           <TabsTrigger value="registrations">All Registrations</TabsTrigger>
           <TabsTrigger value="categories">Category Breakdown</TabsTrigger>
+          <TabsTrigger value="panchayath">Panchayath Breakdown</TabsTrigger>
         </TabsList>
 
         <TabsContent value="registrations" className="space-y-4">
@@ -399,9 +486,18 @@ const AdminPanel = () => {
         <TabsContent value="categories" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {categoryStats.map((category) => (
-              <Card key={category.value}>
+              <Card key={category.value} className="cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <CardTitle className="text-lg">{category.label}</CardTitle>
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    {category.label}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedCategoryDetails(category.value)}
+                    >
+                      View Details
+                    </Button>
+                  </CardTitle>
                   <CardDescription>Total registrations in this category</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -413,6 +509,141 @@ const AdminPanel = () => {
               </Card>
             ))}
           </div>
+
+          {/* Category Details Dialog */}
+          <Dialog open={!!selectedCategoryDetails} onOpenChange={() => setSelectedCategoryDetails(null)}>
+            <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  {categories.find(c => c.value === selectedCategoryDetails)?.label} - Detailed View
+                </DialogTitle>
+                <DialogDescription>
+                  All registrations for this category
+                </DialogDescription>
+                <div className="flex gap-2 mt-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const categoryRegs = getCategoryRegistrations(selectedCategoryDetails!);
+                      const categoryLabel = categories.find(c => c.value === selectedCategoryDetails)?.label;
+                      exportToXML(categoryRegs, `${categoryLabel}_registrations.xml`);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-1" />
+                    Export XML
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const categoryRegs = getCategoryRegistrations(selectedCategoryDetails!);
+                      const categoryLabel = categories.find(c => c.value === selectedCategoryDetails)?.label;
+                      exportToPDF(categoryRegs, `${categoryLabel}_registrations.pdf`);
+                    }}
+                  >
+                    <FileText className="h-4 w-4 mr-1" />
+                    Export PDF
+                  </Button>
+                </div>
+              </DialogHeader>
+              
+              {selectedCategoryDetails && (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Mobile</TableHead>
+                      <TableHead>Panchayath</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Submitted</TableHead>
+                      <TableHead>Unique ID</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getCategoryRegistrations(selectedCategoryDetails).map((reg) => (
+                      <TableRow key={reg.id}>
+                        <TableCell className="font-medium">{reg.fullName}</TableCell>
+                        <TableCell>{reg.mobileNumber}</TableCell>
+                        <TableCell>{reg.panchayathDetails}</TableCell>
+                        <TableCell>
+                          <Badge variant={
+                            reg.status === 'approved' ? 'default' :
+                            reg.status === 'rejected' ? 'destructive' : 'secondary'
+                          }>
+                            {reg.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{new Date(reg.submittedAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{reg.uniqueId || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </DialogContent>
+          </Dialog>
+        </TabsContent>
+
+        <TabsContent value="panchayath" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Panchayath-wise Breakdown
+              </CardTitle>
+              <CardDescription>Registration statistics by Panchayath</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Panchayath</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Pending</TableHead>
+                    <TableHead>Approved</TableHead>
+                    <TableHead>Rejected</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {panchayathBreakdown.map((item) => (
+                    <TableRow key={item.panchayath}>
+                      <TableCell className="font-medium">{item.panchayath}</TableCell>
+                      <TableCell>{item.totalRegistrations}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">{item.pendingCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="default">{item.approvedCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="destructive">{item.rejectedCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => exportToXML(item.registrations, `${item.panchayath}_registrations.xml`)}
+                          >
+                            XML
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => exportToPDF(item.registrations, `${item.panchayath}_registrations.pdf`)}
+                          >
+                            PDF
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

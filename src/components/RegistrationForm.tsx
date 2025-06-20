@@ -59,6 +59,12 @@ const RegistrationForm = () => {
       label: "EntreLife",
       description: "General entrepreneurship and business development track covering business planning, financial management, marketing, and leadership skills.",
       color: "bg-purple-100 text-purple-800"
+    },
+    {
+      value: "job-card",
+      label: "Job Card (All Categories)",
+      description: "Single registration providing access to opportunities across all categories. This comprehensive option allows you to explore multiple business tracks and receive benefits from the entire SEDP ecosystem.",
+      color: "bg-indigo-100 text-indigo-800"
     }
   ];
 
@@ -258,6 +264,13 @@ const RegistrationForm = () => {
                     <div>
                       <h4 className="font-semibold text-sm">{selectedCategory.label}</h4>
                       <p className="text-sm text-gray-600 mt-1">{selectedCategory.description}</p>
+                      {selectedCategory.value === 'job-card' && (
+                        <div className="mt-2 p-2 bg-indigo-50 rounded-lg">
+                          <p className="text-xs text-indigo-700 font-medium">
+                            🎯 Special Benefits: Access to all categories, comprehensive training, and priority consideration for multiple opportunities!
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>
