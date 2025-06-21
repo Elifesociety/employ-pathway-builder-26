@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Registration {
@@ -37,7 +37,8 @@ const AdminPanel = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<string | null>(null);
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [panchayathFilterCategory, setPanchayathFilterCategory] = useState("all");
+  const [panchayathFilterStatus, setPanchayathFilterStatus] = useState("all");
 
   const categories = [
     { value: "pennyekart-free", label: "Pennyekart Free Registration" },
@@ -113,7 +114,9 @@ const AdminPanel = () => {
           uniqueId: action === 'approve' ? generateUniqueId(reg.mobileNumber) : undefined
         };
 
-        if (action === 'approve') {
+        if (action === '
+
+approve') {
           // Simulate WhatsApp notification
           const categoryLabel = categories.find(cat => cat.value === reg.category)?.label || reg.category;
           console.log(`WhatsApp notification would be sent to ${reg.whatsappNumber}:`);
@@ -139,25 +142,39 @@ const AdminPanel = () => {
     localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
   };
 
-  const exportToXML = (data: Registration[], filename: string) => {
-    const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<registrations>
-${data.map(reg => `  <registration>
-    <id>${reg.id}</id>
-    <fullName>${reg.fullName}</fullName>
-    <mobileNumber>${reg.mobileNumber}</mobileNumber>
-    <whatsappNumber>${reg.whatsappNumber}</whatsappNumber>
-    <address>${reg.address}</address>
-    <panchayathDetails>${reg.panchayathDetails}</panchayathDetails>
-    <category>${reg.category}</category>
-    <status>${reg.status}</status>
-    <submittedAt>${reg.submittedAt}</submittedAt>
-    ${reg.approvedAt ? `<approvedAt>${reg.approvedAt}</approvedAt>` : ''}
-    ${reg.uniqueId ? `<uniqueId>${reg.uniqueId}</uniqueId>` : ''}
-  </registration>`).join('\n')}
-</registrations>`;
+  const exportToCSV = (data: Registration[], filename: string) => {
+    const headers = [
+      'S.No',
+      'Full Name',
+      'Mobile Number',
+      'WhatsApp Number',
+      'Address',
+      'Panchayath',
+      'Category',
+      'Status',
+      'Submitted Date',
+      'Approved Date',
+      'Unique ID'
+    ];
 
-    const blob = new Blob([xmlContent], { type: 'application/xml' });
+    const csvContent = [
+      headers.join(','),
+      ...data.map((reg, index) => [
+        index + 1,
+        `"${reg.fullName}"`,
+        reg.mobileNumber,
+        reg.whatsappNumber,
+        `"${reg.address.replace(/"/g, '""')}"`,
+        `"${reg.panchayathDetails}"`,
+        `"${categories.find(c => c.value === reg.category)?.label || reg.category}"`,
+        reg.status.toUpperCase(),
+        new Date(reg.submittedAt).toLocaleDateString(),
+        reg.approvedAt ? new Date(reg.approvedAt).toLocaleDateString() : '',
+        reg.uniqueId || ''
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -166,33 +183,43 @@ ${data.map(reg => `  <registration>
     URL.revokeObjectURL(url);
     
     toast({
-      title: "XML Export Complete",
+      title: "CSV Export Complete",
       description: `Exported ${data.length} registrations`,
     });
   };
 
   const exportToPDF = (data: Registration[], filename: string) => {
-    // Simple text-based PDF export (for a real PDF, you'd use a library like jsPDF)
-    const content = `SEDP Registration Report
+    // Enhanced text-based export with better formatting
+    const content = `SELF EMPLOYMENT DEVELOPMENT PROGRAM (SEDP)
+REGISTRATION REPORT
+${'='.repeat(80)}
+
 Generated: ${new Date().toLocaleString()}
 Total Records: ${data.length}
+Report Type: ${filename.replace('.txt', '').replace(/_/g, ' ').toUpperCase()}
 
 ${'='.repeat(80)}
 
 ${data.map((reg, index) => `
-${index + 1}. ${reg.fullName}
-   Mobile: ${reg.mobileNumber}
-   WhatsApp: ${reg.whatsappNumber}
-   Address: ${reg.address}
-   Panchayath: ${reg.panchayathDetails}
-   Category: ${categories.find(c => c.value === reg.category)?.label}
-   Status: ${reg.status.toUpperCase()}
-   Submitted: ${new Date(reg.submittedAt).toLocaleDateString()}
-   ${reg.uniqueId ? `Unique ID: ${reg.uniqueId}` : ''}
-   ${'-'.repeat(40)}
-`).join('\n')}`;
+${(index + 1).toString().padStart(3, '0')}. ${reg.fullName.toUpperCase()}
+     Mobile: ${reg.mobileNumber} | WhatsApp: ${reg.whatsappNumber}
+     Address: ${reg.address}
+     Panchayath: ${reg.panchayathDetails}
+     Category: ${categories.find(c => c.value === reg.category)?.label}
+     Status: ${reg.status.toUpperCase()}
+     Submitted: ${new Date(reg.submittedAt).toLocaleDateString()}${reg.approvedAt ? `
+     Processed: ${new Date(reg.approvedAt).toLocaleDateString()}` : ''}${reg.uniqueId ? `
+     Unique ID: ${reg.uniqueId}` : ''}
+     ${'-'.repeat(70)}
+`).join('')}
 
-    const blob = new Blob([content], { type: 'text/plain' });
+${'='.repeat(80)}
+End of Report
+Generated by SEDP Admin Panel
+Contact: +91 9876543210 | Email: admin@sedp.com
+${'='.repeat(80)}`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -201,8 +228,8 @@ ${index + 1}. ${reg.fullName}
     URL.revokeObjectURL(url);
     
     toast({
-      title: "Export Complete",
-      description: `Exported ${data.length} registrations as text format`,
+      title: "PDF Export Complete",
+      description: `Exported ${data.length} registrations as formatted text`,
     });
   };
 
@@ -211,9 +238,21 @@ ${index + 1}. ${reg.fullName}
   };
 
   const getPanchayathBreakdown = () => {
+    let filteredData = registrations;
+
+    // Apply category filter
+    if (panchayathFilterCategory !== "all") {
+      filteredData = filteredData.filter(reg => reg.category === panchayathFilterCategory);
+    }
+
+    // Apply status filter
+    if (panchayathFilterStatus !== "all") {
+      filteredData = filteredData.filter(reg => reg.status === panchayathFilterStatus);
+    }
+
     const panchayathMap = new Map<string, Registration[]>();
     
-    registrations.forEach(reg => {
+    filteredData.forEach(reg => {
       const panchayath = reg.panchayathDetails.trim();
       if (!panchayathMap.has(panchayath)) {
         panchayathMap.set(panchayath, []);
@@ -231,16 +270,6 @@ ${index + 1}. ${reg.fullName}
         registrations: regs
       }))
       .sort((a, b) => b.totalRegistrations - a.totalRegistrations);
-  };
-
-  const toggleCardExpansion = (cardId: string) => {
-    const newExpanded = new Set(expandedCards);
-    if (newExpanded.has(cardId)) {
-      newExpanded.delete(cardId);
-    } else {
-      newExpanded.add(cardId);
-    }
-    setExpandedCards(newExpanded);
   };
 
   const getStats = () => {
@@ -574,11 +603,11 @@ ${index + 1}. ${reg.fullName}
                     onClick={() => {
                       const categoryRegs = getCategoryRegistrations(selectedCategoryDetails!);
                       const categoryLabel = categories.find(c => c.value === selectedCategoryDetails)?.label;
-                      exportToXML(categoryRegs, `${categoryLabel}_registrations.xml`);
+                      exportToCSV(categoryRegs, `${categoryLabel}_registrations.csv`);
                     }}
                   >
                     <Download className="h-4 w-4 mr-1" />
-                    Export XML
+                    Export CSV
                   </Button>
                   <Button
                     variant="outline"
@@ -648,22 +677,64 @@ ${index + 1}. ${reg.fullName}
               <CardDescription>Registration statistics organized by Panchayath areas</CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Panchayath Filters */}
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <Select value={panchayathFilterCategory} onValueChange={setPanchayathFilterCategory}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="Filter by category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map(category => (
+                      <SelectItem key={category.value} value={category.value}>
+                        {category.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={panchayathFilterStatus} onValueChange={setPanchayathFilterStatus}>
+                  <SelectTrigger className="w-full md:w-[150px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="mb-4 flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => exportToXML(registrations, 'all_panchayath_registrations.xml')}
+                  onClick={() => {
+                    const filteredRegs = registrations.filter(reg => {
+                      if (panchayathFilterCategory !== "all" && reg.category !== panchayathFilterCategory) return false;
+                      if (panchayathFilterStatus !== "all" && reg.status !== panchayathFilterStatus) return false;
+                      return true;
+                    });
+                    exportToCSV(filteredRegs, 'panchayath_breakdown_registrations.csv');
+                  }}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Export All XML
+                  Export Filtered CSV
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => exportToPDF(registrations, 'all_panchayath_registrations.pdf')}
+                  onClick={() => {
+                    const filteredRegs = registrations.filter(reg => {
+                      if (panchayathFilterCategory !== "all" && reg.category !== panchayathFilterCategory) return false;
+                      if (panchayathFilterStatus !== "all" && reg.status !== panchayathFilterStatus) return false;
+                      return true;
+                    });
+                    exportToPDF(filteredRegs, 'panchayath_breakdown_registrations.pdf');
+                  }}
                 >
                   <FileText className="h-4 w-4 mr-1" />
-                  Export All PDF
+                  Export Filtered PDF
                 </Button>
               </div>
               
@@ -675,55 +746,58 @@ ${index + 1}. ${reg.fullName}
                     <TableHead>Pending</TableHead>
                     <TableHead>Approved</TableHead>
                     <TableHead>Rejected</TableHead>
-                    <TableHead>% of Total</TableHead>
+                    <TableHead>% of Filtered</TableHead>
                     <TableHead>Export</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {panchayathBreakdown.map((item) => (
-                    <TableRow key={item.panchayath}>
-                      <TableCell className="font-medium">{item.panchayath}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{item.totalRegistrations}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{item.pendingCount}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="default">{item.approvedCount}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="destructive">{item.rejectedCount}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {((item.totalRegistrations / stats.total) * 100 || 0).toFixed(1)}%
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => exportToXML(item.registrations, `${item.panchayath}_registrations.xml`)}
-                          >
-                            XML
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => exportToPDF(item.registrations, `${item.panchayath}_registrations.pdf`)}
-                          >
-                            PDF
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {panchayathBreakdown.map((item) => {
+                    const totalFiltered = panchayathBreakdown.reduce((sum, p) => sum + p.totalRegistrations, 0);
+                    return (
+                      <TableRow key={item.panchayath}>
+                        <TableCell className="font-medium">{item.panchayath}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{item.totalRegistrations}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{item.pendingCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">{item.approvedCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="destructive">{item.rejectedCount}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          {((item.totalRegistrations / totalFiltered) * 100 || 0).toFixed(1)}%
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => exportToCSV(item.registrations, `${item.panchayath}_registrations.csv`)}
+                            >
+                              CSV
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => exportToPDF(item.registrations, `${item.panchayath}_registrations.pdf`)}
+                            >
+                              PDF
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
               
               {panchayathBreakdown.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
-                  No registrations found to display panchayath breakdown.
+                  No registrations found matching the selected filters.
                 </div>
               )}
             </CardContent>

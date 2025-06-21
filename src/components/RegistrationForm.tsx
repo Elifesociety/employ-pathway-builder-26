@@ -35,7 +35,7 @@ const RegistrationForm = () => {
     "Vengara", "Wandoor"
   ];
 
-  const categories = [
+  const pennyekartCategories = [
     {
       value: "pennyekart-free",
       label: "Pennyekart Free Registration",
@@ -49,7 +49,10 @@ const RegistrationForm = () => {
       description: "Premium e-commerce features with advanced selling tools, analytics, marketing support, and priority customer service for serious sellers.",
       icon: <TrendingUp className="h-6 w-6" />,
       color: "bg-blue-100 text-blue-800 border-blue-200"
-    },
+    }
+  ];
+
+  const elifeCategories = [
     {
       value: "farmelife",
       label: "FarmeLife",
@@ -173,7 +176,8 @@ const RegistrationForm = () => {
     }
   };
 
-  const selectedCategory = [...categories, jobCardCategory].find(cat => cat.value === formData.category);
+  const allCategories = [...pennyekartCategories, ...elifeCategories];
+  const selectedCategory = [...allCategories, jobCardCategory].find(cat => cat.value === formData.category);
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -254,80 +258,126 @@ const RegistrationForm = () => {
               />
             </div>
 
-            {/* Job Card - Special Category */}
+            {/* Category Selection */}
             <div className="space-y-4">
               <Label>Select Category *</Label>
               
-              {/* Job Card - Special Option */}
-              <Card 
-                className={`cursor-pointer transition-all duration-200 border-2 ${
-                  formData.category === jobCardCategory.value 
-                    ? 'border-yellow-400 shadow-lg scale-[1.02]' 
-                    : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'
-                } ${jobCardCategory.color}`}
-                onClick={() => setFormData({...formData, category: jobCardCategory.value})}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 p-2 rounded-lg bg-yellow-200">
-                      {jobCardCategory.icon}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-lg">{jobCardCategory.label}</h3>
-                        <Star className="h-5 w-5 text-yellow-600 fill-current" />
-                        <Badge className="bg-yellow-200 text-yellow-800">Recommended</Badge>
+              {/* Job Card - Special Category */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-lg flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-600 fill-current" />
+                  Special Offering
+                </h4>
+                
+                <Card 
+                  className={`cursor-pointer transition-all duration-200 border-2 ${
+                    formData.category === jobCardCategory.value 
+                      ? 'border-yellow-400 shadow-lg scale-[1.02]' 
+                      : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'
+                  } ${jobCardCategory.color}`}
+                  onClick={() => setFormData({...formData, category: jobCardCategory.value})}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="flex-shrink-0 p-2 rounded-lg bg-yellow-200">
+                        {jobCardCategory.icon}
                       </div>
-                      <p className="text-sm mb-3">{jobCardCategory.description}</p>
-                      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-                        <p className="text-xs font-medium text-yellow-700">
-                          🎯 Special Benefits: Universal access to all program categories, comprehensive training across multiple domains, priority consideration for opportunities, and enhanced support throughout your entrepreneurial journey!
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      {formData.category === jobCardCategory.value && (
-                        <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
-                          <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-lg">{jobCardCategory.label}</h3>
+                          <Badge className="bg-yellow-200 text-yellow-800">Recommended</Badge>
                         </div>
-                      )}
+                        <p className="text-sm mb-3">{jobCardCategory.description}</p>
+                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                          <p className="text-xs font-medium text-yellow-700">
+                            🎯 Special Benefits: Universal access to all program categories, comprehensive training across multiple domains, priority consideration for opportunities, and enhanced support throughout your entrepreneurial journey!
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        {formData.category === jobCardCategory.value && (
+                          <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
+                            <div className="w-3 h-3 bg-white rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* Regular Categories */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {categories.map((category) => (
-                  <Card 
-                    key={category.value}
-                    className={`cursor-pointer transition-all duration-200 border-2 ${
-                      formData.category === category.value 
-                        ? 'border-blue-400 shadow-lg scale-[1.02]' 
-                        : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
-                    } ${category.color}`}
-                    onClick={() => setFormData({...formData, category: category.value})}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 p-2 rounded-lg bg-white bg-opacity-50">
-                          {category.icon}
+              {/* Pennyekart Customer Registration */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-lg text-green-800">🟢 Pennyekart Customer Registration</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {pennyekartCategories.map((category) => (
+                    <Card 
+                      key={category.value}
+                      className={`cursor-pointer transition-all duration-200 border-2 ${
+                        formData.category === category.value 
+                          ? 'border-green-400 shadow-lg scale-[1.02]' 
+                          : 'border-gray-200 hover:border-green-300 hover:shadow-md'
+                      } ${category.color}`}
+                      onClick={() => setFormData({...formData, category: category.value})}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 p-2 rounded-lg bg-white bg-opacity-50">
+                            {category.icon}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-2">{category.label}</h3>
+                            <p className="text-sm">{category.description}</p>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {formData.category === category.value && (
+                              <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                                <div className="w-3 h-3 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-2">{category.label}</h3>
-                          <p className="text-sm">{category.description}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* E-Life Self Employment Registration */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-lg text-blue-800">🔵 E-Life Self Employment Registration</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {elifeCategories.map((category) => (
+                    <Card 
+                      key={category.value}
+                      className={`cursor-pointer transition-all duration-200 border-2 ${
+                        formData.category === category.value 
+                          ? 'border-blue-400 shadow-lg scale-[1.02]' 
+                          : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+                      } ${category.color}`}
+                      onClick={() => setFormData({...formData, category: category.value})}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 p-2 rounded-lg bg-white bg-opacity-50">
+                            {category.icon}
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold mb-2">{category.label}</h3>
+                            <p className="text-sm">{category.description}</p>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {formData.category === category.value && (
+                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                                <div className="w-3 h-3 bg-white rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex-shrink-0">
-                          {formData.category === category.value && (
-                            <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
-                              <div className="w-3 h-3 bg-white rounded-full"></div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
             </div>
 

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Users, TrendingUp, Award, Target, Phone, MapPin, Star, ShoppingCart, Leaf, Coffee } from "lucide-react";
 import RegistrationForm from "@/components/RegistrationForm";
 import AdminPanel from "@/components/AdminPanel";
+import CategoriesPage from "@/components/CategoriesPage";
+import AboutProgram from "@/components/AboutProgram";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -96,6 +98,18 @@ const Index = () => {
                 Home
               </Button>
               <Button
+                variant={activeTab === "categories" ? "default" : "ghost"}
+                onClick={() => setActiveTab("categories")}
+              >
+                Categories
+              </Button>
+              <Button
+                variant={activeTab === "about" ? "default" : "ghost"}
+                onClick={() => setActiveTab("about")}
+              >
+                About Program
+              </Button>
+              <Button
                 variant={activeTab === "register" ? "default" : "ghost"}
                 onClick={() => setActiveTab("register")}
               >
@@ -114,8 +128,10 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:w-[400px] mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-5 lg:w-[600px] mx-auto mb-8">
             <TabsTrigger value="home">Home</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
             <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
@@ -258,6 +274,14 @@ const Index = () => {
                 </Button>
               </div>
             </section>
+          </TabsContent>
+
+          <TabsContent value="categories">
+            <CategoriesPage onRegisterClick={(category) => setActiveTab("register")} />
+          </TabsContent>
+
+          <TabsContent value="about">
+            <AboutProgram />
           </TabsContent>
 
           <TabsContent value="register">
