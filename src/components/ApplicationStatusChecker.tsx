@@ -128,7 +128,7 @@ const ApplicationStatusChecker = () => {
                   {categories.find(cat => cat.value === searchResult.category)?.label}
                 </CardDescription>
               </div>
-              <Badge variant={getStatusMessage(searchResult.status).variant}>
+              <Badge variant={getStatusMessage(searchResult.status).variant} className="bg-[#078107]">
                 {searchResult.status.toUpperCase()}
               </Badge>
             </div>
@@ -153,7 +153,7 @@ const ApplicationStatusChecker = () => {
               </div>
               <div>
                 {searchResult.uniqueId && <p><strong>Unique ID:</strong> <Badge variant="outline">{searchResult.uniqueId}</Badge></p>}
-                <p><strong>Category:</strong> {categories.find(cat => cat.value === searchResult.category)?.label}</p>
+                <p className="text-base font-bold text-[#920202]"><strong>Category:</strong> {categories.find(cat => cat.value === searchResult.category)?.label}</p>
               </div>
             </div>
 
