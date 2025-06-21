@@ -543,11 +543,11 @@ ${'='.repeat(80)}`;
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
                         <span>Pending:</span>
-                        <Badge variant="secondary">{category.pending}</Badge>
+                        <Badge variant="secondary" className="bg-[#ffe015]">{category.pending}</Badge>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Approved:</span>
-                        <Badge variant="default">{category.approved}</Badge>
+                        <Badge variant="default" className="bg-[#07ad07]">{category.approved}</Badge>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span>Rejected:</span>
