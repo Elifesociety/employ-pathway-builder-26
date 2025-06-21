@@ -467,10 +467,10 @@ ${'='.repeat(80)}`;
                               <h3 className="font-semibold">{registration.fullName}</h3>
                               <p className="text-sm text-gray-600">{registration.mobileNumber}</p>
                             </div>
-                            <Badge variant={registration.status === 'approved' ? 'default' : registration.status === 'rejected' ? 'destructive' : 'secondary'}>
+                            <Badge variant={registration.status === 'approved' ? 'default' : registration.status === 'rejected' ? 'destructive' : 'secondary'} className="bg-[#08b708]">
                               {registration.status}
                             </Badge>
-                            <Badge variant="outline" className="bg-[#30f2ec]">
+                            <Badge variant="outline" className="bg-[#ffc508]">
                               {categories.find(c => c.value === registration.category)?.label}
                             </Badge>
                           </div>
