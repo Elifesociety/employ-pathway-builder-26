@@ -10,9 +10,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Award, Star, Users, TrendingUp, Leaf, Coffee, ShoppingCart } from "lucide-react";
 import QRPaymentCode from "./QRPaymentCode";
-
 const RegistrationForm = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [formData, setFormData] = useState({
     fullName: "",
     mobileNumber: "",
@@ -27,66 +28,45 @@ const RegistrationForm = () => {
   const [generatedUniqueId, setGeneratedUniqueId] = useState("");
 
   // Malappuram Panchayaths
-  const panchayaths = [
-    "Abdu Rahman Nagar", "Alamcode", "Anakkayam", "Areecode", "Cheekkode", "Chelakkara",
-    "Chemmad", "Cherpulassery", "Chokkad", "Edakkara", "Edappal", "Edavanna", "Elamkulam",
-    "Irumbuzhi", "Kadampuzha", "Kalikavu", "Kannamangalam", "Karuvarakundu", "Keezhattur",
-    "Kizhuparamba", "Kodur", "Kondotty", "Koottilangadi", "Kuruva", "Kuttippuram",
-    "Makkaraparamba", "Malappuram", "Manjeri", "Marakkara", "Melattur", "Morayur",
-    "Mudur", "Munduparamba", "Nanmukku", "Nilambur", "Othukungal", "Pandikkad",
-    "Perinthalmanna", "Perumpadappu", "Ponmundam", "Pulikkal", "Purathur", "Tanalur",
-    "Tanur", "Thiruvali", "Tirurangadi", "Triprangode", "Vazhakkad", "Vazhayur",
-    "Vengara", "Wandoor"
-  ];
-
-  const pennyekartCategories = [
-    {
-      value: "pennyekart-free",
-      label: "Pennyekart Free Registration",
-      description: "Free e-commerce platform access for small-scale sellers. Perfect for beginners wanting to start their online selling journey without any initial investment.",
-      icon: <ShoppingCart className="h-6 w-6" />,
-      color: "bg-green-100 text-green-800 border-green-200"
-    },
-    {
-      value: "pennyekart-paid",
-      label: "Pennyekart Paid Registration",
-      description: "Premium e-commerce features with advanced selling tools, analytics, marketing support, and priority customer service for serious sellers.",
-      icon: <TrendingUp className="h-6 w-6" />,
-      color: "bg-blue-100 text-blue-800 border-blue-200"
-    }
-  ];
-
-  const elifeCategories = [
-    {
-      value: "farmelife",
-      label: "FarmeLife",
-      description: "Agricultural and farming business development program focusing on modern farming techniques, crop management, and agricultural entrepreneurship.",
-      icon: <Leaf className="h-6 w-6" />,
-      color: "bg-amber-100 text-amber-800 border-amber-200"
-    },
-    {
-      value: "foodelife",
-      label: "FoodeLife",
-      description: "Food processing and culinary business opportunities including food safety, packaging, distribution, and restaurant management skills.",
-      icon: <Coffee className="h-6 w-6" />,
-      color: "bg-orange-100 text-orange-800 border-orange-200"
-    },
-    {
-      value: "organelife",
-      label: "OrganeLife",
-      description: "Organic farming and sustainable agriculture initiatives promoting eco-friendly practices, organic certification, and premium market access.",
-      icon: <Leaf className="h-6 w-6" />,
-      color: "bg-emerald-100 text-emerald-800 border-emerald-200"
-    },
-    {
-      value: "entrelife",
-      label: "EntreLife",
-      description: "General entrepreneurship and business development track covering business planning, financial management, marketing, and leadership skills.",
-      icon: <Users className="h-6 w-6" />,
-      color: "bg-purple-100 text-purple-800 border-purple-200"
-    }
-  ];
-
+  const panchayaths = ["Abdu Rahman Nagar", "Alamcode", "Anakkayam", "Areecode", "Cheekkode", "Chelakkara", "Chemmad", "Cherpulassery", "Chokkad", "Edakkara", "Edappal", "Edavanna", "Elamkulam", "Irumbuzhi", "Kadampuzha", "Kalikavu", "Kannamangalam", "Karuvarakundu", "Keezhattur", "Kizhuparamba", "Kodur", "Kondotty", "Koottilangadi", "Kuruva", "Kuttippuram", "Makkaraparamba", "Malappuram", "Manjeri", "Marakkara", "Melattur", "Morayur", "Mudur", "Munduparamba", "Nanmukku", "Nilambur", "Othukungal", "Pandikkad", "Perinthalmanna", "Perumpadappu", "Ponmundam", "Pulikkal", "Purathur", "Tanalur", "Tanur", "Thiruvali", "Tirurangadi", "Triprangode", "Vazhakkad", "Vazhayur", "Vengara", "Wandoor"];
+  const pennyekartCategories = [{
+    value: "pennyekart-free",
+    label: "Pennyekart Free Registration",
+    description: "Free e-commerce platform access for small-scale sellers. Perfect for beginners wanting to start their online selling journey without any initial investment.",
+    icon: <ShoppingCart className="h-6 w-6" />,
+    color: "bg-green-100 text-green-800 border-green-200"
+  }, {
+    value: "pennyekart-paid",
+    label: "Pennyekart Paid Registration",
+    description: "Premium e-commerce features with advanced selling tools, analytics, marketing support, and priority customer service for serious sellers.",
+    icon: <TrendingUp className="h-6 w-6" />,
+    color: "bg-blue-100 text-blue-800 border-blue-200"
+  }];
+  const elifeCategories = [{
+    value: "farmelife",
+    label: "FarmeLife",
+    description: "Agricultural and farming business development program focusing on modern farming techniques, crop management, and agricultural entrepreneurship.",
+    icon: <Leaf className="h-6 w-6" />,
+    color: "bg-amber-100 text-amber-800 border-amber-200"
+  }, {
+    value: "foodelife",
+    label: "FoodeLife",
+    description: "Food processing and culinary business opportunities including food safety, packaging, distribution, and restaurant management skills.",
+    icon: <Coffee className="h-6 w-6" />,
+    color: "bg-orange-100 text-orange-800 border-orange-200"
+  }, {
+    value: "organelife",
+    label: "OrganeLife",
+    description: "Organic farming and sustainable agriculture initiatives promoting eco-friendly practices, organic certification, and premium market access.",
+    icon: <Leaf className="h-6 w-6" />,
+    color: "bg-emerald-100 text-emerald-800 border-emerald-200"
+  }, {
+    value: "entrelife",
+    label: "EntreLife",
+    description: "General entrepreneurship and business development track covering business planning, financial management, marketing, and leadership skills.",
+    icon: <Users className="h-6 w-6" />,
+    color: "bg-purple-100 text-purple-800 border-purple-200"
+  }];
   const jobCardCategory = {
     value: "job-card",
     label: "Job Card (All Categories)",
@@ -94,18 +74,15 @@ const RegistrationForm = () => {
     icon: <Award className="h-6 w-6" />,
     color: "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-300"
   };
-
   const getCategoryFee = (category: string) => {
     const fees = JSON.parse(localStorage.getItem('sedp_category_fees') || '[]');
     const categoryFee = fees.find((fee: any) => fee.category === category);
     return categoryFee?.fee || 0;
   };
-
   const generateTempUniqueId = (mobileNumber: string, fullName: string) => {
     const firstLetter = fullName.charAt(0).toUpperCase();
     return `ESP${mobileNumber}${firstLetter}`;
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -115,7 +92,7 @@ const RegistrationForm = () => {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
       return;
@@ -127,41 +104,35 @@ const RegistrationForm = () => {
       toast({
         title: "Error",
         description: "Please enter a valid 10-digit mobile number",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
       return;
     }
-
     if (!declarationAccepted) {
       toast({
         title: "Declaration Required",
         description: "Please accept the declaration to proceed",
-        variant: "destructive",
+        variant: "destructive"
       });
       setIsSubmitting(false);
       return;
     }
-
     try {
       // Check for duplicate mobile number
       const existingData = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
-      const isDuplicate = existingData.some((registration: any) => 
-        registration.mobileNumber === formData.mobileNumber
-      );
-
+      const isDuplicate = existingData.some((registration: any) => registration.mobileNumber === formData.mobileNumber);
       if (isDuplicate) {
         toast({
           title: "Registration Already Exists",
           description: "This mobile number is already registered. Each mobile number can only be used once.",
-          variant: "destructive",
+          variant: "destructive"
         });
         setIsSubmitting(false);
         return;
       }
-
       const tempUniqueId = generateTempUniqueId(formData.mobileNumber, formData.fullName);
-      
+
       // Create registration record
       const registration = {
         id: Date.now().toString(),
@@ -175,13 +146,11 @@ const RegistrationForm = () => {
       // Save to localStorage (in a real app, this would be sent to a backend)
       const updatedRegistrations = [...existingData, registration];
       localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
-
       setGeneratedUniqueId(tempUniqueId);
       setIsSubmitted(true);
-
       toast({
         title: "Registration Submitted Successfully!",
-        description: "Your application has been submitted for review. You will be notified once it's approved.",
+        description: "Your application has been submitted for review. You will be notified once it's approved."
       });
 
       // Reset form
@@ -193,26 +162,22 @@ const RegistrationForm = () => {
         panchayathDetails: "",
         category: ""
       });
-
     } catch (error) {
       console.error('Registration error:', error);
       toast({
         title: "Error",
         description: "Failed to submit registration. Please try again.",
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
   const allCategories = [...pennyekartCategories, ...elifeCategories];
   const selectedCategory = [...allCategories, jobCardCategory].find(cat => cat.value === formData.category);
   const categoryFee = formData.category ? getCategoryFee(formData.category) : 0;
-
   if (isSubmitted) {
-    return (
-      <div className="max-w-4xl mx-auto space-y-6">
+    return <div className="max-w-4xl mx-auto space-y-6">
         <Card className="border-green-200 bg-green-50">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl text-green-800">Registration Submitted Successfully!</CardTitle>
@@ -237,13 +202,7 @@ const RegistrationForm = () => {
               </div>
             </div>
 
-            {categoryFee > 0 && (
-              <QRPaymentCode 
-                amount={categoryFee}
-                category={selectedCategory?.label || ''}
-                uniqueId={generatedUniqueId}
-              />
-            )}
+            {categoryFee > 0 && <QRPaymentCode amount={categoryFee} category={selectedCategory?.label || ''} uniqueId={generatedUniqueId} />}
 
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h4 className="font-semibold text-blue-800 mb-2">Next Steps:</h4>
@@ -257,33 +216,27 @@ const RegistrationForm = () => {
             </div>
 
             <div className="text-center">
-              <Button 
-                onClick={() => {
-                  setIsSubmitted(false);
-                  setFormData({
-                    fullName: "",
-                    mobileNumber: "",
-                    whatsappNumber: "",
-                    address: "",
-                    panchayathDetails: "",
-                    category: ""
-                  });
-                  setDeclarationAccepted(false);
-                  setGeneratedUniqueId("");
-                }}
-                variant="outline"
-              >
+              <Button onClick={() => {
+              setIsSubmitted(false);
+              setFormData({
+                fullName: "",
+                mobileNumber: "",
+                whatsappNumber: "",
+                address: "",
+                panchayathDetails: "",
+                category: ""
+              });
+              setDeclarationAccepted(false);
+              setGeneratedUniqueId("");
+            }} variant="outline">
                 Submit Another Registration
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="max-w-4xl mx-auto">
+  return <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Employment Registration</CardTitle>
@@ -296,54 +249,41 @@ const RegistrationForm = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name *</Label>
-                <Input
-                  id="fullName"
-                  type="text"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                  required
-                />
+                <Input id="fullName" type="text" placeholder="Enter your full name" value={formData.fullName} onChange={e => setFormData({
+                ...formData,
+                fullName: e.target.value
+              })} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="mobileNumber">Mobile Number *</Label>
-                <Input
-                  id="mobileNumber"
-                  type="tel"
-                  placeholder="Enter 10-digit mobile number"
-                  value={formData.mobileNumber}
-                  onChange={(e) => setFormData({...formData, mobileNumber: e.target.value})}
-                  maxLength={10}
-                  required
-                />
+                <Input id="mobileNumber" type="tel" placeholder="Enter 10-digit mobile number" value={formData.mobileNumber} onChange={e => setFormData({
+                ...formData,
+                mobileNumber: e.target.value
+              })} maxLength={10} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="whatsappNumber">WhatsApp Number *</Label>
-                <Input
-                  id="whatsappNumber"
-                  type="tel"
-                  placeholder="Enter WhatsApp number"
-                  value={formData.whatsappNumber}
-                  onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
-                  maxLength={10}
-                  required
-                />
+                <Input id="whatsappNumber" type="tel" placeholder="Enter WhatsApp number" value={formData.whatsappNumber} onChange={e => setFormData({
+                ...formData,
+                whatsappNumber: e.target.value
+              })} maxLength={10} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="panchayathDetails">Panchayath *</Label>
-                <Select value={formData.panchayathDetails} onValueChange={(value) => setFormData({...formData, panchayathDetails: value})}>
+                <Select value={formData.panchayathDetails} onValueChange={value => setFormData({
+                ...formData,
+                panchayathDetails: value
+              })}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your Panchayath" />
                   </SelectTrigger>
                   <SelectContent>
-                    {panchayaths.map((panchayath) => (
-                      <SelectItem key={panchayath} value={panchayath}>
+                    {panchayaths.map(panchayath => <SelectItem key={panchayath} value={panchayath}>
                         {panchayath}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -351,14 +291,10 @@ const RegistrationForm = () => {
 
             <div className="space-y-2">
               <Label htmlFor="address">Complete Address *</Label>
-              <Textarea
-                id="address"
-                placeholder="Enter your complete address with house name, street, pin code etc."
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                required
-                rows={3}
-              />
+              <Textarea id="address" placeholder="Enter your complete address with house name, street, pin code etc." value={formData.address} onChange={e => setFormData({
+              ...formData,
+              address: e.target.value
+            })} required rows={3} />
             </div>
 
             {/* Category Selection */}
@@ -372,14 +308,10 @@ const RegistrationForm = () => {
                   Special Offering
                 </h4>
                 
-                <Card 
-                  className={`cursor-pointer transition-all duration-200 border-2 ${
-                    formData.category === jobCardCategory.value 
-                      ? 'border-yellow-400 shadow-lg scale-[1.02]' 
-                      : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'
-                  } ${jobCardCategory.color}`}
-                  onClick={() => setFormData({...formData, category: jobCardCategory.value})}
-                >
+                <Card className={`cursor-pointer transition-all duration-200 border-2 ${formData.category === jobCardCategory.value ? 'border-yellow-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-yellow-300 hover:shadow-md'} ${jobCardCategory.color}`} onClick={() => setFormData({
+                ...formData,
+                category: jobCardCategory.value
+              })}>
                   <CardContent className="p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0 p-2 rounded-lg bg-yellow-200">
@@ -398,11 +330,9 @@ const RegistrationForm = () => {
                         </div>
                       </div>
                       <div className="flex-shrink-0">
-                        {formData.category === jobCardCategory.value && (
-                          <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
+                        {formData.category === jobCardCategory.value && <div className="w-6 h-6 bg-yellow-600 rounded-full flex items-center justify-center">
                             <div className="w-3 h-3 bg-white rounded-full"></div>
-                          </div>
-                        )}
+                          </div>}
                       </div>
                     </div>
                   </CardContent>
@@ -413,16 +343,10 @@ const RegistrationForm = () => {
               <div className="space-y-3">
                 <h4 className="font-semibold text-lg text-green-800">🟢 Pennyekart Customer Registration</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {pennyekartCategories.map((category) => (
-                    <Card 
-                      key={category.value}
-                      className={`cursor-pointer transition-all duration-200 border-2 ${
-                        formData.category === category.value 
-                          ? 'border-green-400 shadow-lg scale-[1.02]' 
-                          : 'border-gray-200 hover:border-green-300 hover:shadow-md'
-                      } ${category.color}`}
-                      onClick={() => setFormData({...formData, category: category.value})}
-                    >
+                  {pennyekartCategories.map(category => <Card key={category.value} className={`cursor-pointer transition-all duration-200 border-2 ${formData.category === category.value ? 'border-green-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-green-300 hover:shadow-md'} ${category.color}`} onClick={() => setFormData({
+                  ...formData,
+                  category: category.value
+                })}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 p-2 rounded-lg bg-white bg-opacity-50">
@@ -433,16 +357,13 @@ const RegistrationForm = () => {
                             <p className="text-sm">{category.description}</p>
                           </div>
                           <div className="flex-shrink-0">
-                            {formData.category === category.value && (
-                              <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
+                            {formData.category === category.value && <div className="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center">
                                 <div className="w-3 h-3 bg-white rounded-full"></div>
-                              </div>
-                            )}
+                              </div>}
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
               </div>
 
@@ -450,16 +371,10 @@ const RegistrationForm = () => {
               <div className="space-y-3">
                 <h4 className="font-semibold text-lg text-blue-800">🔵 E-Life Self Employment Registration</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {elifeCategories.map((category) => (
-                    <Card 
-                      key={category.value}
-                      className={`cursor-pointer transition-all duration-200 border-2 ${
-                        formData.category === category.value 
-                          ? 'border-blue-400 shadow-lg scale-[1.02]' 
-                          : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
-                      } ${category.color}`}
-                      onClick={() => setFormData({...formData, category: category.value})}
-                    >
+                  {elifeCategories.map(category => <Card key={category.value} className={`cursor-pointer transition-all duration-200 border-2 ${formData.category === category.value ? 'border-blue-400 shadow-lg scale-[1.02]' : 'border-gray-200 hover:border-blue-300 hover:shadow-md'} ${category.color}`} onClick={() => setFormData({
+                  ...formData,
+                  category: category.value
+                })}>
                       <CardContent className="p-4">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 p-2 rounded-lg bg-white bg-opacity-50">
@@ -470,22 +385,18 @@ const RegistrationForm = () => {
                             <p className="text-sm">{category.description}</p>
                           </div>
                           <div className="flex-shrink-0">
-                            {formData.category === category.value && (
-                              <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                            {formData.category === category.value && <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                                 <div className="w-3 h-3 bg-white rounded-full"></div>
-                              </div>
-                            )}
+                              </div>}
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
+                    </Card>)}
                 </div>
               </div>
             </div>
 
-            {selectedCategory && (
-              <Card className="border-l-4 border-l-blue-500 bg-blue-50">
+            {selectedCategory && <Card className="border-l-4 border-l-blue-500 bg-blue-50">
                 <CardContent className="pt-4">
                   <div className="flex items-start gap-3">
                     <Badge className={selectedCategory.value === 'job-card' ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-200 text-blue-800'}>
@@ -496,10 +407,7 @@ const RegistrationForm = () => {
                         <h4 className="font-semibold text-sm">{selectedCategory.label}</h4>
                         <div className="text-right">
                           <p className="text-sm font-semibold">
-                            Registration Fee: {categoryFee === 0 ? 
-                              <span className="text-green-600">FREE</span> : 
-                              <span className="text-blue-600">₹{categoryFee}</span>
-                            }
+                            Registration Fee: {categoryFee === 0 ? <span className="text-green-600">FREE</span> : <span className="text-blue-600">₹{categoryFee}</span>}
                           </p>
                         </div>
                       </div>
@@ -507,12 +415,11 @@ const RegistrationForm = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
-            )}
+              </Card>}
 
             {/* Declaration Section */}
             <Card className="border-orange-200 bg-orange-50">
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 bg-[#b1eaf0]">
                 <div className="space-y-4">
                   <h4 className="font-semibold text-orange-800">Declaration & Confirmation</h4>
                   <div className="bg-white p-4 rounded-lg border border-orange-200">
@@ -527,11 +434,7 @@ const RegistrationForm = () => {
                       {categoryFee > 0 && <li>• I understand that a registration fee of ₹{categoryFee} is required to complete the process</li>}
                     </ul>
                     <div className="flex items-start space-x-2">
-                      <Checkbox 
-                        id="declaration"
-                        checked={declarationAccepted}
-                        onCheckedChange={(checked) => setDeclarationAccepted(!!checked)}
-                      />
+                      <Checkbox id="declaration" checked={declarationAccepted} onCheckedChange={checked => setDeclarationAccepted(!!checked)} />
                       <Label htmlFor="declaration" className="text-sm text-gray-700 leading-relaxed">
                         I have read and agree to the above declaration and terms
                       </Label>
@@ -541,18 +444,12 @@ const RegistrationForm = () => {
               </CardContent>
             </Card>
 
-            <Button 
-              type="submit" 
-              className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-lg py-6"
-              disabled={isSubmitting || !declarationAccepted}
-            >
+            <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-lg py-6" disabled={isSubmitting || !declarationAccepted}>
               {isSubmitting ? "Submitting Registration..." : "Submit Registration"}
             </Button>
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 };
-
 export default RegistrationForm;
