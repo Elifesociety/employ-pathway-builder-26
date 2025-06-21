@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Award, Star, Users, TrendingUp, Leaf, Coffee, ShoppingCart } from "lucide-react";
+import QRPaymentCode from "./QRPaymentCode";
 
 const RegistrationForm = () => {
   const { toast } = useToast();
@@ -21,6 +22,9 @@ const RegistrationForm = () => {
     category: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [declarationAccepted, setDeclarationAccepted] = useState(false);
+  const [generatedUniqueId, setGeneratedUniqueId] = useState("");
 
   // Malappuram Panchayaths
   const panchayaths = [
@@ -91,6 +95,17 @@ const RegistrationForm = () => {
     color: "bg-gradient-to-r from-yellow-100 to-amber-100 text-yellow-800 border-yellow-300"
   };
 
+  const getCategoryFee = (category: string) => {
+    const fees = JSON.parse(localStorage.getItem('sedp_category_fees') || '[]');
+    const categoryFee = fees.find((fee: any) => fee.category === category);
+    return categoryFee?.fee || 0;
+  };
+
+  const generateTempUniqueId = (mobileNumber: string, fullName: string) => {
+    const firstLetter = fullName.charAt(0).toUpperCase();
+    return `ESP${mobileNumber}${firstLetter}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -118,6 +133,16 @@ const RegistrationForm = () => {
       return;
     }
 
+    if (!declarationAccepted) {
+      toast({
+        title: "Declaration Required",
+        description: "Please accept the declaration to proceed",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Check for duplicate mobile number
       const existingData = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
@@ -135,6 +160,8 @@ const RegistrationForm = () => {
         return;
       }
 
+      const tempUniqueId = generateTempUniqueId(formData.mobileNumber, formData.fullName);
+      
       // Create registration record
       const registration = {
         id: Date.now().toString(),
@@ -148,6 +175,9 @@ const RegistrationForm = () => {
       // Save to localStorage (in a real app, this would be sent to a backend)
       const updatedRegistrations = [...existingData, registration];
       localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+
+      setGeneratedUniqueId(tempUniqueId);
+      setIsSubmitted(true);
 
       toast({
         title: "Registration Submitted Successfully!",
@@ -178,6 +208,79 @@ const RegistrationForm = () => {
 
   const allCategories = [...pennyekartCategories, ...elifeCategories];
   const selectedCategory = [...allCategories, jobCardCategory].find(cat => cat.value === formData.category);
+  const categoryFee = formData.category ? getCategoryFee(formData.category) : 0;
+
+  if (isSubmitted) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-green-800">Registration Submitted Successfully!</CardTitle>
+            <CardDescription className="text-green-600">
+              Your application has been received and is under review
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="bg-white p-6 rounded-lg border border-green-200">
+              <h3 className="font-semibold text-lg mb-4">Registration Summary</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Name:</strong> {formData.fullName}</p>
+                  <p><strong>Mobile:</strong> {formData.mobileNumber}</p>
+                  <p><strong>Category:</strong> {selectedCategory?.label}</p>
+                </div>
+                <div>
+                  <p><strong>Panchayath:</strong> {formData.panchayathDetails}</p>
+                  <p><strong>Reference ID:</strong> <Badge variant="outline">{generatedUniqueId}</Badge></p>
+                  <p><strong>Registration Fee:</strong> {categoryFee === 0 ? 'FREE' : `₹${categoryFee}`}</p>
+                </div>
+              </div>
+            </div>
+
+            {categoryFee > 0 && (
+              <QRPaymentCode 
+                amount={categoryFee}
+                category={selectedCategory?.label || ''}
+                uniqueId={generatedUniqueId}
+              />
+            )}
+
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2">Next Steps:</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Keep your reference ID safe for future communication</li>
+                {categoryFee > 0 && <li>• Complete payment using the QR code above</li>}
+                <li>• You will receive updates via WhatsApp on your registered number</li>
+                <li>• Check your application status using the "Check Status" section</li>
+                <li>• Contact support for any queries: +91 9876543210</li>
+              </ul>
+            </div>
+
+            <div className="text-center">
+              <Button 
+                onClick={() => {
+                  setIsSubmitted(false);
+                  setFormData({
+                    fullName: "",
+                    mobileNumber: "",
+                    whatsappNumber: "",
+                    address: "",
+                    panchayathDetails: "",
+                    category: ""
+                  });
+                  setDeclarationAccepted(false);
+                  setGeneratedUniqueId("");
+                }}
+                variant="outline"
+              >
+                Submit Another Registration
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -388,8 +491,18 @@ const RegistrationForm = () => {
                     <Badge className={selectedCategory.value === 'job-card' ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-200 text-blue-800'}>
                       {selectedCategory.value === 'job-card' ? 'Universal Access' : 'Selected'}
                     </Badge>
-                    <div>
-                      <h4 className="font-semibold text-sm">{selectedCategory.label}</h4>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-sm">{selectedCategory.label}</h4>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold">
+                            Registration Fee: {categoryFee === 0 ? 
+                              <span className="text-green-600">FREE</span> : 
+                              <span className="text-blue-600">₹{categoryFee}</span>
+                            }
+                          </p>
+                        </div>
+                      </div>
                       <p className="text-sm text-gray-600 mt-1">{selectedCategory.description}</p>
                     </div>
                   </div>
@@ -397,10 +510,41 @@ const RegistrationForm = () => {
               </Card>
             )}
 
+            {/* Declaration Section */}
+            <Card className="border-orange-200 bg-orange-50">
+              <CardContent className="pt-4">
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-orange-800">Declaration & Confirmation</h4>
+                  <div className="bg-white p-4 rounded-lg border border-orange-200">
+                    <p className="text-sm text-gray-700 mb-4">
+                      By submitting this registration, I confirm that:
+                    </p>
+                    <ul className="text-sm text-gray-600 space-y-2 mb-4">
+                      <li>• All the information provided above is true and accurate to the best of my knowledge</li>
+                      <li>• I understand that providing false information may lead to rejection of my application</li>
+                      <li>• I agree to abide by the program terms and conditions</li>
+                      <li>• I consent to receive updates and communications via the provided contact details</li>
+                      {categoryFee > 0 && <li>• I understand that a registration fee of ₹{categoryFee} is required to complete the process</li>}
+                    </ul>
+                    <div className="flex items-start space-x-2">
+                      <Checkbox 
+                        id="declaration"
+                        checked={declarationAccepted}
+                        onCheckedChange={(checked) => setDeclarationAccepted(!!checked)}
+                      />
+                      <Label htmlFor="declaration" className="text-sm text-gray-700 leading-relaxed">
+                        I have read and agree to the above declaration and terms
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Button 
               type="submit" 
               className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-lg py-6"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !declarationAccepted}
             >
               {isSubmitting ? "Submitting Registration..." : "Submit Registration"}
             </Button>

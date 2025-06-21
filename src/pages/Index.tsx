@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp, Award, Target, Phone, MapPin, Star, ShoppingCart, Leaf, Coffee } from "lucide-react";
+import { Users, TrendingUp, Award, Target, Phone, MapPin, Star, ShoppingCart, Leaf, Coffee, Search } from "lucide-react";
 import RegistrationForm from "@/components/RegistrationForm";
 import AdminPanel from "@/components/AdminPanel";
 import CategoriesPage from "@/components/CategoriesPage";
 import AboutProgram from "@/components/AboutProgram";
+import ApplicationStatusChecker from "@/components/ApplicationStatusChecker";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("home");
@@ -110,6 +111,12 @@ const Index = () => {
                 About Program
               </Button>
               <Button
+                variant={activeTab === "status" ? "default" : "ghost"}
+                onClick={() => setActiveTab("status")}
+              >
+                Check Status
+              </Button>
+              <Button
                 variant={activeTab === "register" ? "default" : "ghost"}
                 onClick={() => setActiveTab("register")}
               >
@@ -128,10 +135,11 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 lg:w-[600px] mx-auto mb-8">
+          <TabsList className="grid w-full grid-cols-6 lg:w-[720px] mx-auto mb-8">
             <TabsTrigger value="home">Home</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="status">Status</TabsTrigger>
             <TabsTrigger value="register">Register</TabsTrigger>
             <TabsTrigger value="admin">Admin</TabsTrigger>
           </TabsList>
@@ -150,13 +158,51 @@ const Index = () => {
                   Join our Self Employment Development Program and transform your business ideas into reality. 
                   Choose from multiple specialized tracks designed to support your unique entrepreneurial goals.
                 </p>
-                <Button 
-                  size="lg" 
-                  className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
-                  onClick={() => setActiveTab("register")}
-                >
-                  Start Your Registration
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button 
+                    size="lg" 
+                    className="bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                    onClick={() => setActiveTab("register")}
+                  >
+                    Start Your Registration
+                  </Button>
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={() => setActiveTab("status")}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Check Application Status
+                  </Button>
+                </div>
+              </div>
+            </section>
+
+            {/* Application Status Checker Section */}
+            <section className="py-12">
+              <div className="max-w-4xl mx-auto">
+                <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200">
+                  <CardHeader className="text-center">
+                    <CardTitle className="text-2xl text-purple-800 flex items-center justify-center gap-2">
+                      <Search className="h-6 w-6" />
+                      Check Your Application Status
+                    </CardTitle>
+                    <CardDescription className="text-purple-600">
+                      Track your registration progress in real-time
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <p className="text-purple-700 mb-4">
+                      Enter your mobile number or unique ID to get instant updates on your application status
+                    </p>
+                    <Button 
+                      onClick={() => setActiveTab("status")}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      Check Status Now
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </section>
 
@@ -282,6 +328,10 @@ const Index = () => {
 
           <TabsContent value="about">
             <AboutProgram />
+          </TabsContent>
+
+          <TabsContent value="status">
+            <ApplicationStatusChecker />
           </TabsContent>
 
           <TabsContent value="register">

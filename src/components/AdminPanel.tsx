@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin } from "lucide-react";
+import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin, Edit, Save, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Registration {
   id: string;
@@ -26,6 +27,11 @@ interface Registration {
   uniqueId?: string;
 }
 
+interface CategoryFee {
+  category: string;
+  fee: number;
+}
+
 const AdminPanel = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -38,6 +44,9 @@ const AdminPanel = () => {
   const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<string | null>(null);
   const [panchayathFilterCategory, setPanchayathFilterCategory] = useState("all");
   const [panchayathFilterStatus, setPanchayathFilterStatus] = useState("all");
+  const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
+  const [categoryFees, setCategoryFees] = useState<CategoryFee[]>([]);
+  const [editingFees, setEditingFees] = useState(false);
 
   const categories = [
     { value: "pennyekart-free", label: "Pennyekart Free Registration" },
@@ -49,11 +58,21 @@ const AdminPanel = () => {
     { value: "job-card", label: "Job Card (All Categories)" }
   ];
 
-  // Load registrations from localStorage
+  // Load data from localStorage
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
     setRegistrations(data);
     setFilteredRegistrations(data);
+    
+    const fees = JSON.parse(localStorage.getItem('sedp_category_fees') || '[]');
+    if (fees.length === 0) {
+      // Initialize default fees
+      const defaultFees = categories.map(cat => ({ category: cat.value, fee: cat.value === 'pennyekart-free' ? 0 : 500 }));
+      setCategoryFees(defaultFees);
+      localStorage.setItem('sedp_category_fees', JSON.stringify(defaultFees));
+    } else {
+      setCategoryFees(fees);
+    }
   }, []);
 
   // Filter registrations based on search and filters
@@ -98,9 +117,9 @@ const AdminPanel = () => {
     }
   };
 
-  const generateUniqueId = (mobileNumber: string) => {
-    const serialNumber = String(Date.now()).slice(-3).padStart(3, '0');
-    return `EJC${mobileNumber}-${serialNumber}`;
+  const generateUniqueId = (mobileNumber: string, fullName: string) => {
+    const firstLetter = fullName.charAt(0).toUpperCase();
+    return `ESP${mobileNumber}${firstLetter}`;
   };
 
   const handleApproval = (registrationId: string, action: 'approve' | 'reject') => {
@@ -110,11 +129,10 @@ const AdminPanel = () => {
           ...reg,
           status: action === 'approve' ? 'approved' as const : 'rejected' as const,
           approvedAt: new Date().toISOString(),
-          uniqueId: action === 'approve' ? generateUniqueId(reg.mobileNumber) : undefined
+          uniqueId: action === 'approve' ? generateUniqueId(reg.mobileNumber, reg.fullName) : undefined
         };
 
         if (action === 'approve') {
-          // Simulate WhatsApp notification
           const categoryLabel = categories.find(cat => cat.value === reg.category)?.label || reg.category;
           console.log(`WhatsApp notification would be sent to ${reg.whatsappNumber}:`);
           console.log(`Hello ${reg.fullName}, your registration for ${categoryLabel} has been approved! Your unique ID is: ${updatedReg.uniqueId}`);
@@ -137,6 +155,47 @@ const AdminPanel = () => {
 
     setRegistrations(updatedRegistrations);
     localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+  };
+
+  const handleEditRegistration = (registration: Registration) => {
+    setEditingRegistration({ ...registration });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingRegistration) return;
+
+    const updatedRegistrations = registrations.map(reg => 
+      reg.id === editingRegistration.id ? editingRegistration : reg
+    );
+
+    setRegistrations(updatedRegistrations);
+    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    setEditingRegistration(null);
+    
+    toast({
+      title: "Registration Updated",
+      description: "Registration details have been successfully updated.",
+    });
+  };
+
+  const handleFeeUpdate = (category: string, newFee: number) => {
+    const updatedFees = categoryFees.map(fee => 
+      fee.category === category ? { ...fee, fee: newFee } : fee
+    );
+    setCategoryFees(updatedFees);
+  };
+
+  const saveFees = () => {
+    localStorage.setItem('sedp_category_fees', JSON.stringify(categoryFees));
+    setEditingFees(false);
+    toast({
+      title: "Fees Updated",
+      description: "Category fees have been successfully updated.",
+    });
+  };
+
+  const getCategoryFee = (category: string) => {
+    return categoryFees.find(fee => fee.category === category)?.fee || 0;
   };
 
   const exportToCSV = (data: Registration[], filename: string) => {
@@ -403,6 +462,7 @@ ${'='.repeat(80)}`;
           <TabsTrigger value="registrations">All Registrations</TabsTrigger>
           <TabsTrigger value="categories">Category Breakdown</TabsTrigger>
           <TabsTrigger value="panchayath">Panchayath Breakdown</TabsTrigger>
+          <TabsTrigger value="fees">Fee Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="registrations" className="space-y-4">
@@ -479,9 +539,21 @@ ${'='.repeat(80)}`;
                               {categories.find(c => c.value === registration.category)?.label}
                             </Badge>
                           </div>
-                          <Button variant="ghost" size="sm">
-                            View Details
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" size="sm">
+                              View Details
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditRegistration(registration);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </CollapsibleTrigger>
@@ -800,7 +872,148 @@ ${'='.repeat(80)}`;
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="fees" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Category Fee Management</CardTitle>
+                  <CardDescription>Set registration fees for each category</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  {editingFees ? (
+                    <>
+                      <Button onClick={saveFees} className="bg-green-600 hover:bg-green-700">
+                        <Save className="h-4 w-4 mr-1" />
+                        Save Changes
+                      </Button>
+                      <Button variant="outline" onClick={() => setEditingFees(false)}>
+                        <X className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <Button onClick={() => setEditingFees(true)}>
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit Fees
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {categories.map((category) => {
+                  const currentFee = getCategoryFee(category.value);
+                  return (
+                    <div key={category.value} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-semibold">{category.label}</h3>
+                        <p className="text-sm text-gray-600">{category.value}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">₹</span>
+                        {editingFees ? (
+                          <Input
+                            type="number"
+                            value={currentFee}
+                            onChange={(e) => handleFeeUpdate(category.value, parseInt(e.target.value) || 0)}
+                            className="w-24"
+                            min="0"
+                          />
+                        ) : (
+                          <span className="font-bold text-lg">
+                            {currentFee === 0 ? 'FREE' : `₹${currentFee}`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Edit Registration Dialog */}
+      <Dialog open={!!editingRegistration} onOpenChange={() => setEditingRegistration(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Registration Details</DialogTitle>
+            <DialogDescription>
+              Update the registration information below
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingRegistration && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    value={editingRegistration.fullName}
+                    onChange={(e) => setEditingRegistration({
+                      ...editingRegistration,
+                      fullName: e.target.value
+                    })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Mobile Number</Label>
+                  <Input
+                    value={editingRegistration.mobileNumber}
+                    onChange={(e) => setEditingRegistration({
+                      ...editingRegistration,
+                      mobileNumber: e.target.value
+                    })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>WhatsApp Number</Label>
+                  <Input
+                    value={editingRegistration.whatsappNumber}
+                    onChange={(e) => setEditingRegistration({
+                      ...editingRegistration,
+                      whatsappNumber: e.target.value
+                    })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Panchayath</Label>
+                  <Input
+                    value={editingRegistration.panchayathDetails}
+                    onChange={(e) => setEditingRegistration({
+                      ...editingRegistration,
+                      panchayathDetails: e.target.value
+                    })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Address</Label>
+                <Textarea
+                  value={editingRegistration.address}
+                  onChange={(e) => setEditingRegistration({
+                    ...editingRegistration,
+                    address: e.target.value
+                  })}
+                  rows={3}
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingRegistration(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} className="bg-green-600 hover:bg-green-700">
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
