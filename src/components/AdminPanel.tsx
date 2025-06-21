@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -114,9 +113,7 @@ const AdminPanel = () => {
           uniqueId: action === 'approve' ? generateUniqueId(reg.mobileNumber) : undefined
         };
 
-        if (action === '
-
-approve') {
+        if (action === 'approve') {
           // Simulate WhatsApp notification
           const categoryLabel = categories.find(cat => cat.value === reg.category)?.label || reg.category;
           console.log(`WhatsApp notification would be sent to ${reg.whatsappNumber}:`);
