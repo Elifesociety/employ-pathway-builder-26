@@ -579,7 +579,7 @@ ${'='.repeat(80)}`;
                   const categoryRegs = getCategoryRegistrations(selectedCategoryDetails!);
                   const categoryLabel = categories.find(c => c.value === selectedCategoryDetails)?.label;
                   exportToCSV(categoryRegs, `${categoryLabel}_registrations.csv`);
-                }}>
+                }} className="bg-[#018301] text-slate-50">
                     <Download className="h-4 w-4 mr-1" />
                     Export CSV
                   </Button>
@@ -587,7 +587,7 @@ ${'='.repeat(80)}`;
                   const categoryRegs = getCategoryRegistrations(selectedCategoryDetails!);
                   const categoryLabel = categories.find(c => c.value === selectedCategoryDetails)?.label;
                   exportToPDF(categoryRegs, `${categoryLabel}_registrations.pdf`);
-                }}>
+                }} className="bg-[#ed0505] text-gray-50">
                     <FileText className="h-4 w-4 mr-1" />
                     Export PDF
                   </Button>
