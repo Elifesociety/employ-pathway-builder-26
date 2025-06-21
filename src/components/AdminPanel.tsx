@@ -334,7 +334,7 @@ ${'='.repeat(80)}`;
                 password: e.target.value
               })} required />
               </div>
-              <Button type="submit" className="w-full">Login</Button>
+              <Button type="submit" className="w-full bg-[#00af9b] font-bold">Login</Button>
               <p className="text-sm text-gray-500 text-center">
                 Demo credentials: admin / admin123
               </p>
