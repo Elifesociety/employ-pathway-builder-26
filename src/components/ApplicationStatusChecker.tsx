@@ -134,7 +134,7 @@ const ApplicationStatusChecker = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-[#d3fed1]">
               {getStatusMessage(searchResult.status).icon}
               <div>
                 <h3 className="font-semibold mb-1">
