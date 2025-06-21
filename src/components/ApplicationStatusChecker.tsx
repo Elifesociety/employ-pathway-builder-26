@@ -104,7 +104,7 @@ const ApplicationStatusChecker = () => {
             <Label htmlFor="searchQuery">Mobile Number or Unique ID</Label>
             <div className="flex gap-2">
               <Input id="searchQuery" type="text" placeholder="Enter mobile number (e.g., 9876543210) or Unique ID (e.g., ESP9876543210A)" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyPress={e => e.key === 'Enter' && handleSearch()} />
-              <Button onClick={handleSearch} disabled={isSearching || !searchQuery.trim()} className="min-w-[100px] text-zinc-50 bg-[#007779]">
+              <Button onClick={handleSearch} disabled={isSearching || !searchQuery.trim()} className="min-w-[100px] text-zinc-50 bg-[#04494a]">
                 {isSearching ? <div className="flex items-center gap-2">
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Searching...
