@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Users, TrendingUp, Award, Target, Phone, MapPin } from "lucide-react";
+import { Users, TrendingUp, Award, Target, Phone, MapPin, Star, ShoppingCart, Leaf, Coffee } from "lucide-react";
 import RegistrationForm from "@/components/RegistrationForm";
 import AdminPanel from "@/components/AdminPanel";
 
@@ -37,37 +38,38 @@ const Index = () => {
     {
       name: "Pennyekart Free Registration",
       description: "Free e-commerce platform access for small-scale sellers",
-      color: "bg-green-100 text-green-800"
+      color: "bg-green-100 text-green-800",
+      icon: <ShoppingCart className="h-5 w-5" />
     },
     {
       name: "Pennyekart Paid Registration",
       description: "Premium e-commerce features with advanced selling tools",
-      color: "bg-blue-100 text-blue-800"
+      color: "bg-blue-100 text-blue-800",
+      icon: <TrendingUp className="h-5 w-5" />
     },
     {
       name: "FarmeLife",
       description: "Agricultural and farming business development program",
-      color: "bg-amber-100 text-amber-800"
+      color: "bg-amber-100 text-amber-800",
+      icon: <Leaf className="h-5 w-5" />
     },
     {
       name: "FoodeLife",
       description: "Food processing and culinary business opportunities",
-      color: "bg-orange-100 text-orange-800"
+      color: "bg-orange-100 text-orange-800",
+      icon: <Coffee className="h-5 w-5" />
     },
     {
       name: "OrganeLife",
       description: "Organic farming and sustainable agriculture initiatives",
-      color: "bg-emerald-100 text-emerald-800"
+      color: "bg-emerald-100 text-emerald-800",
+      icon: <Leaf className="h-5 w-5" />
     },
     {
       name: "EntreLife",
       description: "General entrepreneurship and business development track",
-      color: "bg-purple-100 text-purple-800"
-    },
-    {
-      name: "Job Card (All Categories)",
-      description: "Single registration for comprehensive access to all program categories and benefits",
-      color: "bg-indigo-100 text-indigo-800"
+      color: "bg-purple-100 text-purple-800",
+      icon: <Users className="h-5 w-5" />
     }
   ];
 
@@ -164,6 +166,44 @@ const Index = () => {
               </div>
             </section>
 
+            {/* Job Card Special Section */}
+            <section className="py-12">
+              <div className="max-w-4xl mx-auto">
+                <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 border-2 border-yellow-200 shadow-lg">
+                  <CardHeader className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                      <Star className="h-8 w-8 text-yellow-600 fill-current" />
+                      <h3 className="text-2xl font-bold text-yellow-800">Special Offering</h3>
+                      <Star className="h-8 w-8 text-yellow-600 fill-current" />
+                    </div>
+                    <CardTitle className="text-3xl text-yellow-900">Job Card - Universal Access</CardTitle>
+                    <CardDescription className="text-lg text-yellow-700">
+                      Single registration for comprehensive access to ALL program categories
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-center">
+                    <div className="bg-yellow-100 p-6 rounded-lg border border-yellow-300 mb-6">
+                      <h4 className="font-bold text-yellow-800 mb-3">🎯 What You Get:</h4>
+                      <ul className="text-sm text-yellow-700 space-y-2">
+                        <li>✅ Access to all 6 program categories</li>
+                        <li>✅ Priority consideration for opportunities</li>
+                        <li>✅ Comprehensive training across multiple domains</li>
+                        <li>✅ Enhanced support throughout your journey</li>
+                        <li>✅ Cross-category networking opportunities</li>
+                      </ul>
+                    </div>
+                    <Button 
+                      size="lg" 
+                      className="bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white"
+                      onClick={() => setActiveTab("register")}
+                    >
+                      Register for Job Card
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
             {/* Categories Section */}
             <section className="py-12">
               <h3 className="text-3xl font-bold text-center text-gray-900 mb-12">
@@ -174,21 +214,17 @@ const Index = () => {
                   <Card key={index} className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg">{category.name}</CardTitle>
+                        <div className="flex items-center gap-2">
+                          {category.icon}
+                          <CardTitle className="text-lg">{category.name}</CardTitle>
+                        </div>
                         <Badge className={category.color}>
-                          {category.name === "Job Card (All Categories)" ? "Special" : `Track ${index + 1}`}
+                          Track {index + 1}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <CardDescription>{category.description}</CardDescription>
-                      {category.name === "Job Card (All Categories)" && (
-                        <div className="mt-3 p-2 bg-indigo-50 rounded-lg">
-                          <p className="text-xs text-indigo-700 font-medium">
-                            🌟 Recommended: Get access to all categories with a single registration!
-                          </p>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 ))}

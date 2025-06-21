@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Registration {
   id: string;
@@ -35,6 +37,7 @@ const AdminPanel = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedCategoryDetails, setSelectedCategoryDetails] = useState<string | null>(null);
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   const categories = [
     { value: "pennyekart-free", label: "Pennyekart Free Registration" },
@@ -61,7 +64,8 @@ const AdminPanel = () => {
       filtered = filtered.filter(reg => 
         reg.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         reg.mobileNumber.includes(searchTerm) ||
-        reg.whatsappNumber.includes(searchTerm)
+        reg.whatsappNumber.includes(searchTerm) ||
+        reg.panchayathDetails.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -94,8 +98,9 @@ const AdminPanel = () => {
     }
   };
 
-  const generateUniqueId = () => {
-    return 'SEDP' + Date.now().toString().slice(-6) + Math.random().toString(36).substr(2, 3).toUpperCase();
+  const generateUniqueId = (mobileNumber: string) => {
+    const serialNumber = String(Date.now()).slice(-3).padStart(3, '0');
+    return `EJC${mobileNumber}-${serialNumber}`;
   };
 
   const handleApproval = (registrationId: string, action: 'approve' | 'reject') => {
@@ -105,7 +110,7 @@ const AdminPanel = () => {
           ...reg,
           status: action === 'approve' ? 'approved' as const : 'rejected' as const,
           approvedAt: new Date().toISOString(),
-          uniqueId: action === 'approve' ? generateUniqueId() : undefined
+          uniqueId: action === 'approve' ? generateUniqueId(reg.mobileNumber) : undefined
         };
 
         if (action === 'approve') {
@@ -159,12 +164,20 @@ ${data.map(reg => `  <registration>
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
+    
+    toast({
+      title: "XML Export Complete",
+      description: `Exported ${data.length} registrations`,
+    });
   };
 
   const exportToPDF = (data: Registration[], filename: string) => {
     // Simple text-based PDF export (for a real PDF, you'd use a library like jsPDF)
     const content = `SEDP Registration Report
 Generated: ${new Date().toLocaleString()}
+Total Records: ${data.length}
+
+${'='.repeat(80)}
 
 ${data.map((reg, index) => `
 ${index + 1}. ${reg.fullName}
@@ -173,9 +186,10 @@ ${index + 1}. ${reg.fullName}
    Address: ${reg.address}
    Panchayath: ${reg.panchayathDetails}
    Category: ${categories.find(c => c.value === reg.category)?.label}
-   Status: ${reg.status}
+   Status: ${reg.status.toUpperCase()}
    Submitted: ${new Date(reg.submittedAt).toLocaleDateString()}
    ${reg.uniqueId ? `Unique ID: ${reg.uniqueId}` : ''}
+   ${'-'.repeat(40)}
 `).join('\n')}`;
 
     const blob = new Blob([content], { type: 'text/plain' });
@@ -188,7 +202,7 @@ ${index + 1}. ${reg.fullName}
     
     toast({
       title: "Export Complete",
-      description: "File exported as text format (PDF library not included)",
+      description: `Exported ${data.length} registrations as text format`,
     });
   };
 
@@ -207,14 +221,26 @@ ${index + 1}. ${reg.fullName}
       panchayathMap.get(panchayath)!.push(reg);
     });
 
-    return Array.from(panchayathMap.entries()).map(([panchayath, regs]) => ({
-      panchayath,
-      totalRegistrations: regs.length,
-      pendingCount: regs.filter(r => r.status === 'pending').length,
-      approvedCount: regs.filter(r => r.status === 'approved').length,
-      rejectedCount: regs.filter(r => r.status === 'rejected').length,
-      registrations: regs
-    }));
+    return Array.from(panchayathMap.entries())
+      .map(([panchayath, regs]) => ({
+        panchayath,
+        totalRegistrations: regs.length,
+        pendingCount: regs.filter(r => r.status === 'pending').length,
+        approvedCount: regs.filter(r => r.status === 'approved').length,
+        rejectedCount: regs.filter(r => r.status === 'rejected').length,
+        registrations: regs
+      }))
+      .sort((a, b) => b.totalRegistrations - a.totalRegistrations);
+  };
+
+  const toggleCardExpansion = (cardId: string) => {
+    const newExpanded = new Set(expandedCards);
+    if (newExpanded.has(cardId)) {
+      newExpanded.delete(cardId);
+    } else {
+      newExpanded.add(cardId);
+    }
+    setExpandedCards(newExpanded);
   };
 
   const getStats = () => {
@@ -228,8 +254,13 @@ ${index + 1}. ${reg.fullName}
 
   const getCategoryStats = () => {
     return categories.map(category => {
-      const count = registrations.filter(r => r.category === category.value).length;
-      return { ...category, count };
+      const categoryRegs = registrations.filter(r => r.category === category.value);
+      const count = categoryRegs.length;
+      const pending = categoryRegs.filter(r => r.status === 'pending').length;
+      const approved = categoryRegs.filter(r => r.status === 'approved').length;
+      const rejected = categoryRegs.filter(r => r.status === 'rejected').length;
+      
+      return { ...category, count, pending, approved, rejected };
     });
   };
 
@@ -357,7 +388,7 @@ ${index + 1}. ${reg.fullName}
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="Search by name or mobile number..."
+                      placeholder="Search by name, mobile, or panchayath..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -392,7 +423,7 @@ ${index + 1}. ${reg.fullName}
             </CardContent>
           </Card>
 
-          {/* Registrations List */}
+          {/* Registrations List - Collapsible Cards */}
           <div className="space-y-4">
             {filteredRegistrations.length === 0 ? (
               <Card>
@@ -403,32 +434,51 @@ ${index + 1}. ${reg.fullName}
             ) : (
               filteredRegistrations.map((registration) => (
                 <Card key={registration.id}>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{registration.fullName}</h3>
-                          <Badge variant={
-                            registration.status === 'approved' ? 'default' :
-                            registration.status === 'rejected' ? 'destructive' : 'secondary'
-                          }>
-                            {registration.status}
-                          </Badge>
-                          {registration.uniqueId && (
-                            <Badge variant="outline">ID: {registration.uniqueId}</Badge>
-                          )}
+                  <Collapsible>
+                    <CollapsibleTrigger asChild>
+                      <CardContent className="p-4 cursor-pointer hover:bg-gray-50">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <h3 className="font-semibold">{registration.fullName}</h3>
+                              <p className="text-sm text-gray-600">{registration.mobileNumber}</p>
+                            </div>
+                            <Badge variant={
+                              registration.status === 'approved' ? 'default' :
+                              registration.status === 'rejected' ? 'destructive' : 'secondary'
+                            }>
+                              {registration.status}
+                            </Badge>
+                            <Badge variant="outline">
+                              {categories.find(c => c.value === registration.category)?.label}
+                            </Badge>
+                          </div>
+                          <Button variant="ghost" size="sm">
+                            View Details
+                          </Button>
                         </div>
-                        <div className="text-sm text-gray-600 space-y-1">
-                          <p><strong>Mobile:</strong> {registration.mobileNumber}</p>
-                          <p><strong>WhatsApp:</strong> {registration.whatsappNumber}</p>
-                          <p><strong>Category:</strong> {categories.find(c => c.value === registration.category)?.label}</p>
-                          <p><strong>Panchayath:</strong> {registration.panchayathDetails}</p>
-                          <p><strong>Submitted:</strong> {new Date(registration.submittedAt).toLocaleDateString()}</p>
+                      </CardContent>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <CardContent className="pt-0 pb-4 border-t">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <div className="space-y-2">
+                            <p><strong>WhatsApp:</strong> {registration.whatsappNumber}</p>
+                            <p><strong>Address:</strong> {registration.address}</p>
+                            <p><strong>Panchayath:</strong> {registration.panchayathDetails}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <p><strong>Submitted:</strong> {new Date(registration.submittedAt).toLocaleDateString()}</p>
+                            {registration.approvedAt && (
+                              <p><strong>Processed:</strong> {new Date(registration.approvedAt).toLocaleDateString()}</p>
+                            )}
+                            {registration.uniqueId && (
+                              <p><strong>Unique ID:</strong> <Badge variant="outline">{registration.uniqueId}</Badge></p>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col gap-2">
                         {registration.status === 'pending' && (
-                          <>
+                          <div className="flex gap-2 mt-4">
                             <Button
                               size="sm"
                               onClick={() => handleApproval(registration.id, 'approve')}
@@ -445,38 +495,11 @@ ${index + 1}. ${reg.fullName}
                               <XCircle className="h-4 w-4 mr-1" />
                               Reject
                             </Button>
-                          </>
+                          </div>
                         )}
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm">View Details</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Registration Details</DialogTitle>
-                              <DialogDescription>Complete information for {registration.fullName}</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-3">
-                              <div><strong>Full Name:</strong> {registration.fullName}</div>
-                              <div><strong>Mobile Number:</strong> {registration.mobileNumber}</div>
-                              <div><strong>WhatsApp Number:</strong> {registration.whatsappNumber}</div>
-                              <div><strong>Address:</strong> {registration.address}</div>
-                              <div><strong>Panchayath Details:</strong> {registration.panchayathDetails}</div>
-                              <div><strong>Category:</strong> {categories.find(c => c.value === registration.category)?.label}</div>
-                              <div><strong>Status:</strong> <Badge>{registration.status}</Badge></div>
-                              <div><strong>Submitted At:</strong> {new Date(registration.submittedAt).toLocaleString()}</div>
-                              {registration.approvedAt && (
-                                <div><strong>Processed At:</strong> {new Date(registration.approvedAt).toLocaleString()}</div>
-                              )}
-                              {registration.uniqueId && (
-                                <div><strong>Unique ID:</strong> {registration.uniqueId}</div>
-                              )}
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-                      </div>
-                    </div>
-                  </CardContent>
+                      </CardContent>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </Card>
               ))
             )}
@@ -484,12 +507,15 @@ ${index + 1}. ${reg.fullName}
         </TabsContent>
 
         <TabsContent value="categories" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {categoryStats.map((category) => (
-              <Card key={category.value} className="cursor-pointer hover:shadow-lg transition-shadow">
+              <Card key={category.value} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center justify-between">
-                    {category.label}
+                    <span className={category.value === 'job-card' ? 'text-yellow-700' : ''}>
+                      {category.label}
+                      {category.value === 'job-card' && <span className="ml-2">⭐</span>}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"
@@ -498,13 +524,34 @@ ${index + 1}. ${reg.fullName}
                       View Details
                     </Button>
                   </CardTitle>
-                  <CardDescription>Total registrations in this category</CardDescription>
+                  <CardDescription>Registration statistics for this category</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-blue-600">{category.count}</div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    {((category.count / stats.total) * 100 || 0).toFixed(1)}% of total registrations
-                  </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">{category.count}</div>
+                      <p className="text-xs text-gray-600">Total</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span>Pending:</span>
+                        <Badge variant="secondary">{category.pending}</Badge>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Approved:</span>
+                        <Badge variant="default">{category.approved}</Badge>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Rejected:</span>
+                        <Badge variant="destructive">{category.rejected}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3">
+                    <p className="text-sm text-gray-600">
+                      {((category.count / stats.total) * 100 || 0).toFixed(1)}% of total registrations
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -518,7 +565,7 @@ ${index + 1}. ${reg.fullName}
                   {categories.find(c => c.value === selectedCategoryDetails)?.label} - Detailed View
                 </DialogTitle>
                 <DialogDescription>
-                  All registrations for this category
+                  All registrations for this category with export options
                 </DialogDescription>
                 <div className="flex gap-2 mt-4">
                   <Button
@@ -549,37 +596,43 @@ ${index + 1}. ${reg.fullName}
               </DialogHeader>
               
               {selectedCategoryDetails && (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Mobile</TableHead>
-                      <TableHead>Panchayath</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Submitted</TableHead>
-                      <TableHead>Unique ID</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {getCategoryRegistrations(selectedCategoryDetails).map((reg) => (
-                      <TableRow key={reg.id}>
-                        <TableCell className="font-medium">{reg.fullName}</TableCell>
-                        <TableCell>{reg.mobileNumber}</TableCell>
-                        <TableCell>{reg.panchayathDetails}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            reg.status === 'approved' ? 'default' :
-                            reg.status === 'rejected' ? 'destructive' : 'secondary'
-                          }>
-                            {reg.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(reg.submittedAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{reg.uniqueId || '-'}</TableCell>
+                <div className="mt-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>S.No</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Mobile</TableHead>
+                        <TableHead>WhatsApp</TableHead>
+                        <TableHead>Panchayath</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Submitted</TableHead>
+                        <TableHead>Unique ID</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {getCategoryRegistrations(selectedCategoryDetails).map((reg, index) => (
+                        <TableRow key={reg.id}>
+                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell className="font-medium">{reg.fullName}</TableCell>
+                          <TableCell>{reg.mobileNumber}</TableCell>
+                          <TableCell>{reg.whatsappNumber}</TableCell>
+                          <TableCell>{reg.panchayathDetails}</TableCell>
+                          <TableCell>
+                            <Badge variant={
+                              reg.status === 'approved' ? 'default' :
+                              reg.status === 'rejected' ? 'destructive' : 'secondary'
+                            }>
+                              {reg.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(reg.submittedAt).toLocaleDateString()}</TableCell>
+                          <TableCell>{reg.uniqueId || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </DialogContent>
           </Dialog>
@@ -590,11 +643,30 @@ ${index + 1}. ${reg.fullName}
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Panchayath-wise Breakdown
+                Panchayath-wise Registration Breakdown
               </CardTitle>
-              <CardDescription>Registration statistics by Panchayath</CardDescription>
+              <CardDescription>Registration statistics organized by Panchayath areas</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToXML(registrations, 'all_panchayath_registrations.xml')}
+                >
+                  <Download className="h-4 w-4 mr-1" />
+                  Export All XML
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportToPDF(registrations, 'all_panchayath_registrations.pdf')}
+                >
+                  <FileText className="h-4 w-4 mr-1" />
+                  Export All PDF
+                </Button>
+              </div>
+              
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -603,14 +675,17 @@ ${index + 1}. ${reg.fullName}
                     <TableHead>Pending</TableHead>
                     <TableHead>Approved</TableHead>
                     <TableHead>Rejected</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>% of Total</TableHead>
+                    <TableHead>Export</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {panchayathBreakdown.map((item) => (
                     <TableRow key={item.panchayath}>
                       <TableCell className="font-medium">{item.panchayath}</TableCell>
-                      <TableCell>{item.totalRegistrations}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{item.totalRegistrations}</Badge>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{item.pendingCount}</Badge>
                       </TableCell>
@@ -619,6 +694,9 @@ ${index + 1}. ${reg.fullName}
                       </TableCell>
                       <TableCell>
                         <Badge variant="destructive">{item.rejectedCount}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {((item.totalRegistrations / stats.total) * 100 || 0).toFixed(1)}%
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1">
@@ -642,6 +720,12 @@ ${index + 1}. ${reg.fullName}
                   ))}
                 </TableBody>
               </Table>
+              
+              {panchayathBreakdown.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No registrations found to display panchayath breakdown.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
