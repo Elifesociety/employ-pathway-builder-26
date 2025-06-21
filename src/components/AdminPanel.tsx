@@ -353,7 +353,7 @@ ${'='.repeat(80)}`;
           <h2 className="text-2xl font-bold">Admin Dashboard</h2>
           <p className="text-gray-600">Manage registrations and approvals</p>
         </div>
-        <Button variant="outline" onClick={() => setIsLoggedIn(false)}>
+        <Button variant="outline" onClick={() => setIsLoggedIn(false)} className="bg-[#ff5353] text-zinc-50 font-bold">
           Logout
         </Button>
       </div>
