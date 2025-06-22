@@ -1,47 +1,29 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, CheckCircle, XCircle, Users, Clock, Award, Filter, Download, FileText, MapPin, Edit, Save, X, Trash2, Upload } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2, Download, FileText, MapPin, Award } from "lucide-react";
 
-interface Registration {
-  id: string;
-  fullName: string;
-  mobileNumber: string;
-  whatsappNumber: string;
-  address: string;
-  panchayathDetails: string;
-  category: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
-  approvedAt?: string;
-  uniqueId?: string;
-}
-
-interface CategoryFee {
-  category: string;
-  actualFee: number;
-  offerFee: number;
-  hasOffer: boolean;
-  image?: string;
-}
+import AdminLogin from "./admin/AdminLogin";
+import AdminStats from "./admin/AdminStats";
+import RegistrationsTable from "./admin/RegistrationsTable";
+import RegistrationFilters from "./admin/RegistrationFilters";
+import FeeManagement from "./admin/FeeManagement";
+import { useAdminData } from "@/hooks/useAdminData";
+import { Registration, categories } from "@/types/admin";
+import { generateUniqueId, exportToCSV, exportToPDF } from "@/utils/adminUtils";
 
 const AdminPanel = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [credentials, setCredentials] = useState({ username: "", password: "" });
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const { registrations, categoryFees, updateRegistrations, updateCategoryFees } = useAdminData();
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -50,44 +32,10 @@ const AdminPanel = () => {
   const [panchayathFilterCategory, setPanchayathFilterCategory] = useState("all");
   const [panchayathFilterStatus, setPanchayathFilterStatus] = useState("all");
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
-  const [categoryFees, setCategoryFees] = useState<CategoryFee[]>([]);
   const [editingFees, setEditingFees] = useState(false);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
   const [changeCategoryDialog, setChangeCategoryDialog] = useState<{ open: boolean; registration: Registration | null }>({ open: false, registration: null });
   const [newCategory, setNewCategory] = useState("");
-
-  const categories = [
-    { value: "pennyekart-free", label: "Pennyekart Free Registration" },
-    { value: "pennyekart-paid", label: "Pennyekart Paid Registration" },
-    { value: "farmelife", label: "FarmeLife" },
-    { value: "foodelife", label: "FoodeLife" },
-    { value: "organelife", label: "OrganeLife" },
-    { value: "entrelife", label: "EntreLife" },
-    { value: "job-card", label: "Job Card (All Categories)" }
-  ];
-
-  // Load data from localStorage
-  useEffect(() => {
-    const data = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
-    setRegistrations(data);
-    setFilteredRegistrations(data);
-
-    const fees = JSON.parse(localStorage.getItem('sedp_category_fees') || '[]');
-    if (fees.length === 0) {
-      // Initialize default fees with dual structure
-      const defaultFees = categories.map(cat => ({
-        category: cat.value,
-        actualFee: cat.value === 'pennyekart-free' ? 0 : cat.value === 'job-card' ? 2000 : 1000,
-        offerFee: cat.value === 'pennyekart-free' ? 0 : cat.value === 'job-card' ? 800 : 400,
-        hasOffer: cat.value !== 'pennyekart-free',
-        image: ''
-      }));
-      setCategoryFees(defaultFees);
-      localStorage.setItem('sedp_category_fees', JSON.stringify(defaultFees));
-    } else {
-      setCategoryFees(fees);
-    }
-  }, []);
 
   // Filter registrations based on search and filters
   useEffect(() => {
@@ -113,28 +61,6 @@ const AdminPanel = () => {
     setFilteredRegistrations(filtered);
   }, [registrations, searchTerm, filterCategory, filterStatus]);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (credentials.username === "admin" && credentials.password === "admin123") {
-      setIsLoggedIn(true);
-      toast({
-        title: "Login Successful",
-        description: "Welcome to the admin panel"
-      });
-    } else {
-      toast({
-        title: "Login Failed",
-        description: "Invalid credentials",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const generateUniqueId = (mobileNumber: string, fullName: string) => {
-    const firstLetter = fullName.charAt(0).toUpperCase();
-    return `ESP${mobileNumber}${firstLetter}`;
-  };
-
   const handleApproval = (registrationId: string, action: 'approve' | 'reject') => {
     const updatedRegistrations = registrations.map(reg => {
       if (reg.id === registrationId) {
@@ -146,7 +72,6 @@ const AdminPanel = () => {
         };
 
         if (action === 'approve') {
-          const categoryLabel = categories.find(cat => cat.value === reg.category)?.label || reg.category;
           toast({
             title: "Registration Approved",
             description: `${reg.fullName}'s registration has been approved. WhatsApp notification sent.`
@@ -162,8 +87,7 @@ const AdminPanel = () => {
       return reg;
     });
 
-    setRegistrations(updatedRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    updateRegistrations(updatedRegistrations);
   };
 
   const handleCategoryChange = (registrationId: string, newCategoryValue: string) => {
@@ -174,8 +98,7 @@ const AdminPanel = () => {
       return reg;
     });
 
-    setRegistrations(updatedRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    updateRegistrations(updatedRegistrations);
     
     const categoryLabel = categories.find(cat => cat.value === newCategoryValue)?.label;
     toast({
@@ -186,8 +109,7 @@ const AdminPanel = () => {
 
   const handleDeleteRegistration = (registrationId: string) => {
     const updatedRegistrations = registrations.filter(reg => reg.id !== registrationId);
-    setRegistrations(updatedRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    updateRegistrations(updatedRegistrations);
     
     toast({
       title: "Registration Deleted",
@@ -199,8 +121,7 @@ const AdminPanel = () => {
     if (selectedRegistrations.length === 0) return;
 
     const updatedRegistrations = registrations.filter(reg => !selectedRegistrations.includes(reg.id));
-    setRegistrations(updatedRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    updateRegistrations(updatedRegistrations);
     setSelectedRegistrations([]);
     
     toast({
@@ -236,8 +157,7 @@ const AdminPanel = () => {
       reg.id === editingRegistration.id ? editingRegistration : reg
     );
 
-    setRegistrations(updatedRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
+    updateRegistrations(updatedRegistrations);
     setEditingRegistration(null);
     
     toast({
@@ -250,103 +170,14 @@ const AdminPanel = () => {
     const updatedFees = categoryFees.map(fee => 
       fee.category === category ? { ...fee, [field]: value } : fee
     );
-    setCategoryFees(updatedFees);
-  };
-
-  const handleImageUpload = (category: string, imageUrl: string) => {
-    const updatedFees = categoryFees.map(fee => 
-      fee.category === category ? { ...fee, image: imageUrl } : fee
-    );
-    setCategoryFees(updatedFees);
+    updateCategoryFees(updatedFees);
   };
 
   const saveFees = () => {
-    localStorage.setItem('sedp_category_fees', JSON.stringify(categoryFees));
     setEditingFees(false);
     toast({
       title: "Fees Updated",
       description: "Category fees have been successfully updated."
-    });
-  };
-
-  const getCategoryFee = (category: string) => {
-    return categoryFees.find(fee => fee.category === category) || { actualFee: 0, offerFee: 0, hasOffer: false, image: '' };
-  };
-
-  const exportToCSV = (data: Registration[], filename: string) => {
-    const headers = ['S.No', 'Full Name', 'Mobile Number', 'WhatsApp Number', 'Address', 'Panchayath', 'Category', 'Status', 'Submitted Date', 'Approved Date', 'Unique ID'];
-    const csvContent = [
-      headers.join(','),
-      ...data.map((reg, index) => [
-        index + 1,
-        `"${reg.fullName}"`,
-        reg.mobileNumber,
-        reg.whatsappNumber,
-        `"${reg.address.replace(/"/g, '""')}"`,
-        `"${reg.panchayathDetails}"`,
-        `"${categories.find(c => c.value === reg.category)?.label || reg.category}"`,
-        reg.status.toUpperCase(),
-        new Date(reg.submittedAt).toLocaleDateString(),
-        reg.approvedAt ? new Date(reg.approvedAt).toLocaleDateString() : '',
-        reg.uniqueId || ''
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "CSV Export Complete",
-      description: `Exported ${data.length} registrations`
-    });
-  };
-
-  const exportToPDF = (data: Registration[], filename: string) => {
-    const content = `SELF EMPLOYMENT DEVELOPMENT PROGRAM (SEDP)
-REGISTRATION REPORT
-${'='.repeat(80)}
-
-Generated: ${new Date().toLocaleString()}
-Total Records: ${data.length}
-Report Type: ${filename.replace('.txt', '').replace(/_/g, ' ').toUpperCase()}
-
-${'='.repeat(80)}
-
-${data.map((reg, index) => `
-${(index + 1).toString().padStart(3, '0')}. ${reg.fullName.toUpperCase()}
-     Mobile: ${reg.mobileNumber} | WhatsApp: ${reg.whatsappNumber}
-     Address: ${reg.address}
-     Panchayath: ${reg.panchayathDetails}
-     Category: ${categories.find(c => c.value === reg.category)?.label}
-     Status: ${reg.status.toUpperCase()}
-     Submitted: ${new Date(reg.submittedAt).toLocaleDateString()}${reg.approvedAt ? `
-     Processed: ${new Date(reg.approvedAt).toLocaleDateString()}` : ''}${reg.uniqueId ? `
-     Unique ID: ${reg.uniqueId}` : ''}
-     ${'-'.repeat(70)}
-`).join('')}
-
-${'='.repeat(80)}
-End of Report
-Generated by SEDP Admin Panel
-Contact: +91 9876543210 | Email: admin@sedp.com
-${'='.repeat(80)}`;
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename.replace('.pdf', '.txt');
-    link.click();
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: "PDF Export Complete",
-      description: `Exported ${data.length} registrations as formatted text`
     });
   };
 
@@ -384,14 +215,6 @@ ${'='.repeat(80)}`;
     })).sort((a, b) => b.totalRegistrations - a.totalRegistrations);
   };
 
-  const getStats = () => {
-    const total = registrations.length;
-    const pending = registrations.filter(r => r.status === 'pending').length;
-    const approved = registrations.filter(r => r.status === 'approved').length;
-    const rejected = registrations.filter(r => r.status === 'rejected').length;
-    return { total, pending, approved, rejected };
-  };
-
   const getCategoryStats = () => {
     return categories.map(category => {
       const categoryRegs = registrations.filter(r => r.category === category.value);
@@ -404,51 +227,9 @@ ${'='.repeat(80)}`;
   };
 
   if (!isLoggedIn) {
-    return (
-      <div className="max-w-md mx-auto">
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle>Admin Login</CardTitle>
-            <CardDescription>Please enter your credentials to access the admin panel</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Enter username"
-                  value={credentials.username}
-                  onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter password"
-                  value={credentials.password}
-                  onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full bg-[#00af9b] font-bold">
-                Login
-              </Button>
-              <p className="text-sm text-gray-500 text-center">
-                Demo credentials: admin / admin123
-              </p>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return <AdminLogin onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  const stats = getStats();
   const categoryStats = getCategoryStats();
   const panchayathBreakdown = getPanchayathBreakdown();
 
@@ -470,52 +251,7 @@ ${'='.repeat(80)}`;
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Registrations</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
-              </div>
-              <Users className="h-8 w-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
-              </div>
-              <XCircle className="h-8 w-8 text-red-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <AdminStats registrations={registrations} />
 
       <Tabs defaultValue="registrations" className="w-full">
         <TabsList>
@@ -529,43 +265,14 @@ ${'='.repeat(80)}`;
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search by name, mobile, or panchayath..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-full md:w-[200px]">
-                    <SelectValue placeholder="Filter by category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
-                      <SelectItem key={category.value} value={category.value}>
-                        {category.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-full md:w-[150px]">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <RegistrationFilters
+                searchTerm={searchTerm}
+                filterCategory={filterCategory}
+                filterStatus={filterStatus}
+                onSearchChange={setSearchTerm}
+                onCategoryChange={setFilterCategory}
+                onStatusChange={setFilterStatus}
+              />
             </CardContent>
           </Card>
 
@@ -617,124 +324,16 @@ ${'='.repeat(80)}`;
           {/* Registrations Table */}
           <Card>
             <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={selectedRegistrations.length === filteredRegistrations.length && filteredRegistrations.length > 0}
-                        onCheckedChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Mobile</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRegistrations.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                        No registrations found matching your criteria.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredRegistrations.map((registration) => (
-                      <TableRow key={registration.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRegistrations.includes(registration.id)}
-                            onCheckedChange={(checked) => handleSelectRegistration(registration.id, !!checked)}
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">{registration.fullName}</TableCell>
-                        <TableCell>{registration.mobileNumber}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-[#ffc508]">
-                            {categories.find(c => c.value === registration.category)?.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={
-                              registration.status === 'approved' ? 'default' : 
-                              registration.status === 'rejected' ? 'destructive' : 'secondary'
-                            } 
-                            className="bg-[#08b708]"
-                          >
-                            {registration.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(registration.submittedAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => handleEditRegistration(registration)}
-                            >
-                              <Edit className="h-3 w-3" />
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setChangeCategoryDialog({ open: true, registration })}
-                            >
-                              Change
-                            </Button>
-                            {registration.status === 'pending' && (
-                              <>
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => handleApproval(registration.id, 'approve')}
-                                  className="bg-green-600 hover:bg-green-700"
-                                >
-                                  <CheckCircle className="h-3 w-3" />
-                                </Button>
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => handleApproval(registration.id, 'reject')}
-                                >
-                                  <XCircle className="h-3 w-3" />
-                                </Button>
-                              </>
-                            )}
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Confirm Delete</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to delete {registration.fullName}'s registration? 
-                                    This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleDeleteRegistration(registration.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Delete
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+              <RegistrationsTable
+                registrations={filteredRegistrations}
+                selectedRegistrations={selectedRegistrations}
+                onSelectAll={handleSelectAll}
+                onSelectRegistration={handleSelectRegistration}
+                onApproval={handleApproval}
+                onEdit={handleEditRegistration}
+                onDelete={handleDeleteRegistration}
+                onChangeCategory={(registration) => setChangeCategoryDialog({ open: true, registration })}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -782,7 +381,7 @@ ${'='.repeat(80)}`;
                   </div>
                   <div className="mt-3">
                     <p className="text-sm text-gray-600">
-                      {(category.count / stats.total * 100 || 0).toFixed(1)}% of total registrations
+                      {(category.count / registrations.length * 100 || 0).toFixed(1)}% of total registrations
                     </p>
                   </div>
                 </CardContent>
@@ -1013,110 +612,14 @@ ${'='.repeat(80)}`;
         </TabsContent>
 
         <TabsContent value="fees" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Category Fee Management</CardTitle>
-                  <CardDescription>Set registration fees and upload images for each category</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  {editingFees ? (
-                    <>
-                      <Button onClick={saveFees} className="bg-green-600 hover:bg-green-700">
-                        <Save className="h-4 w-4 mr-1" />
-                        Save Changes
-                      </Button>
-                      <Button variant="outline" onClick={() => setEditingFees(false)}>
-                        <X className="h-4 w-4 mr-1" />
-                        Cancel
-                      </Button>
-                    </>
-                  ) : (
-                    <Button onClick={() => setEditingFees(true)}>
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit Fees
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {categories.map((category) => {
-                  const currentFee = getCategoryFee(category.value);
-                  return (
-                    <Card key={category.value} className="p-4">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h3 className="font-semibold text-lg">{category.label}</h3>
-                            <p className="text-sm text-gray-600">{category.value}</p>
-                          </div>
-                          {currentFee.image && (
-                            <img 
-                              src={currentFee.image} 
-                              alt={category.label}
-                              className="w-16 h-16 object-cover rounded-lg"
-                            />
-                          )}
-                        </div>
-                        
-                        {editingFees && (
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <Label>Actual Fee (₹)</Label>
-                              <Input
-                                type="number"
-                                value={currentFee.actualFee}
-                                onChange={(e) => handleFeeUpdate(category.value, 'actualFee', parseInt(e.target.value) || 0)}
-                                min="0"
-                              />
-                            </div>
-                            <div>
-                              <Label>Offer Fee (₹)</Label>
-                              <Input
-                                type="number"
-                                value={currentFee.offerFee}
-                                onChange={(e) => handleFeeUpdate(category.value, 'offerFee', parseInt(e.target.value) || 0)}
-                                min="0"
-                              />
-                            </div>
-                            <div className="flex items-center space-x-2 pt-6">
-                              <Checkbox
-                                id={`offer-${category.value}`}
-                                checked={currentFee.hasOffer}
-                                onCheckedChange={(checked) => handleFeeUpdate(category.value, 'hasOffer', !!checked)}
-                              />
-                              <Label htmlFor={`offer-${category.value}`}>Enable Offer</Label>
-                            </div>
-                          </div>
-                        )}
-                        
-                        {!editingFees && (
-                          <div className="flex items-center gap-4">
-                            <div className="text-sm">
-                              <span className="font-medium">Fee: </span>
-                              {currentFee.hasOffer && currentFee.offerFee < currentFee.actualFee ? (
-                                <span>
-                                  <del className="text-red-600">₹{currentFee.actualFee}</del>{' '}
-                                  <span className="text-green-600 font-bold">₹{currentFee.offerFee}</span>
-                                </span>
-                              ) : currentFee.actualFee === 0 ? (
-                                <span className="text-green-600 font-bold">FREE</span>
-                              ) : (
-                                <span className="font-bold">₹{currentFee.actualFee}</span>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </Card>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+          <FeeManagement
+            categoryFees={categoryFees}
+            editingFees={editingFees}
+            onEditStart={() => setEditingFees(true)}
+            onEditCancel={() => setEditingFees(false)}
+            onSave={saveFees}
+            onFeeUpdate={handleFeeUpdate}
+          />
         </TabsContent>
       </Tabs>
 
