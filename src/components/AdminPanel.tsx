@@ -270,7 +270,7 @@ const AdminPanel = () => {
   };
 
   const getCategoryFee = (category: string) => {
-    return categoryFees.find(fee => fee.category === category) || { actualFee: 0, offerFee: 0, hasOffer: false };
+    return categoryFees.find(fee => fee.category === category) || { actualFee: 0, offerFee: 0, hasOffer: false, image: '' };
   };
 
   const exportToCSV = (data: Registration[], filename: string) => {
