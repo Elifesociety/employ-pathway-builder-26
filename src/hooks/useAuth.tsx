@@ -62,31 +62,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }, []);
 
   const checkAdminRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin');
-
-      if (error) {
-        console.error("Supabase error:", error.message);
-        setIsAdmin(false);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        console.log("❌ User is not an admin");
-        setIsAdmin(false);
-      } else {
-        console.log("✅ User is an admin:", data[0].role);
-        setIsAdmin(true);
-      }
-    } catch (error) {
-      console.error('Error checking admin role:', error);
+  try {
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .single(); // ❌ REMOVE THIS .single()
+    
+    if (data && !error) {
+      setIsAdmin(true);
+    } else {
       setIsAdmin(false);
     }
-  };
+  } catch (error) {
+    console.error('Error checking admin role:', error);
+    setIsAdmin(false);
+  }
+};
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
