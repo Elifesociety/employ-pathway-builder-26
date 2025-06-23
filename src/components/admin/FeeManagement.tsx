@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Edit, Save, X, Upload, Trash2 } from "lucide-react";
 import { CategoryFee, categories } from "@/types/admin";
 import { useToast } from "@/hooks/use-toast";
@@ -91,183 +93,194 @@ const FeeManagement = ({
     <>
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>Category Fee & Image Management</CardTitle>
-              <CardDescription>Set registration fees and manage images for each category</CardDescription>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg sm:text-xl break-words">Category Fee & Image Management</CardTitle>
+              <CardDescription className="text-sm mt-1">Set registration fees and manage images for each category</CardDescription>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-shrink-0">
               {editingFees ? (
                 <>
-                  <Button onClick={onSave} className="bg-green-600 hover:bg-green-700">
+                  <Button onClick={onSave} className="bg-green-600 hover:bg-green-700" size="sm">
                     <Save className="h-4 w-4 mr-1" />
-                    Save Changes
+                    <span className="hidden sm:inline">Save Changes</span>
+                    <span className="sm:hidden">Save</span>
                   </Button>
-                  <Button variant="outline" onClick={onEditCancel}>
+                  <Button variant="outline" onClick={onEditCancel} size="sm">
                     <X className="h-4 w-4 mr-1" />
-                    Cancel
+                    <span className="hidden sm:inline">Cancel</span>
                   </Button>
                 </>
               ) : (
-                <Button onClick={onEditStart}>
+                <Button onClick={onEditStart} size="sm">
                   <Edit className="h-4 w-4 mr-1" />
-                  Edit Fees
+                  <span className="hidden sm:inline">Edit Fees</span>
+                  <span className="sm:hidden">Edit</span>
                 </Button>
               )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-6">
-            {categories.map((category) => {
-              const currentFee = getCategoryFee(category.value);
-              return (
-                <Card key={category.value} className="p-4">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-lg">{category.label}</h3>
-                        <p className="text-sm text-gray-600">{category.value}</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        {currentFee.image && (
-                          <img 
-                            src={currentFee.image} 
-                            alt={category.label}
-                            className="w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
-                          />
-                        )}
-                        <div className="flex flex-col gap-1">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleImageEdit(category.value)}
-                          >
-                            <Upload className="h-3 w-3 mr-1" />
-                            Edit Image
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleImageDelete(category.value)}
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" />
-                            Reset
-                          </Button>
+          <ScrollArea className="h-[600px] w-full">
+            <div className="space-y-6 pr-4">
+              {categories.map((category) => {
+                const currentFee = getCategoryFee(category.value);
+                return (
+                  <Card key={category.value} className="p-3 sm:p-4">
+                    <div className="space-y-4">
+                      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base sm:text-lg break-words">{category.label}</h3>
+                          <p className="text-xs sm:text-sm text-gray-600 break-all">{category.value}</p>
                         </div>
-                      </div>
-                    </div>
-                    
-                    {editingFees && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <Label>Actual Fee (₹)</Label>
-                          <Input
-                            type="number"
-                            value={currentFee.actualFee}
-                            onChange={(e) => onFeeUpdate(category.value, 'actualFee', parseInt(e.target.value) || 0)}
-                            min="0"
-                          />
-                        </div>
-                        <div>
-                          <Label>Offer Fee (₹)</Label>
-                          <Input
-                            type="number"
-                            value={currentFee.offerFee}
-                            onChange={(e) => onFeeUpdate(category.value, 'offerFee', parseInt(e.target.value) || 0)}
-                            min="0"
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2 pt-6">
-                          <Checkbox
-                            id={`offer-${category.value}`}
-                            checked={currentFee.hasOffer}
-                            onCheckedChange={(checked) => onFeeUpdate(category.value, 'hasOffer', !!checked)}
-                          />
-                          <Label htmlFor={`offer-${category.value}`}>Enable Offer</Label>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {!editingFees && (
-                      <div className="flex items-center gap-4">
-                        <div className="text-sm">
-                          <span className="font-medium">Fee: </span>
-                          {currentFee.hasOffer && currentFee.offerFee < currentFee.actualFee ? (
-                            <span>
-                              <del className="text-red-600">₹{currentFee.actualFee}</del>{' '}
-                              <span className="text-green-600 font-bold">₹{currentFee.offerFee}</span>
-                            </span>
-                          ) : currentFee.actualFee === 0 ? (
-                            <span className="text-green-600 font-bold">FREE</span>
-                          ) : (
-                            <span className="font-bold">₹{currentFee.actualFee}</span>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
+                          {currentFee.image && (
+                            <img 
+                              src={currentFee.image} 
+                              alt={category.label}
+                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border-2 border-gray-200"
+                            />
                           )}
+                          <div className="flex flex-row sm:flex-col gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImageEdit(category.value)}
+                              className="text-xs"
+                            >
+                              <Upload className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">Edit Image</span>
+                              <span className="sm:hidden">Edit</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleImageDelete(category.value)}
+                              className="text-xs"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              <span className="hidden sm:inline">Reset</span>
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                      
+                      {editingFees && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          <div>
+                            <Label className="text-sm">Actual Fee (₹)</Label>
+                            <Input
+                              type="number"
+                              value={currentFee.actualFee}
+                              onChange={(e) => onFeeUpdate(category.value, 'actualFee', parseInt(e.target.value) || 0)}
+                              min="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-sm">Offer Fee (₹)</Label>
+                            <Input
+                              type="number"
+                              value={currentFee.offerFee}
+                              onChange={(e) => onFeeUpdate(category.value, 'offerFee', parseInt(e.target.value) || 0)}
+                              min="0"
+                              className="text-sm"
+                            />
+                          </div>
+                          <div className="flex items-center space-x-2 pt-4 sm:pt-6">
+                            <Checkbox
+                              id={`offer-${category.value}`}
+                              checked={currentFee.hasOffer}
+                              onCheckedChange={(checked) => onFeeUpdate(category.value, 'hasOffer', !!checked)}
+                            />
+                            <Label htmlFor={`offer-${category.value}`} className="text-sm">Enable Offer</Label>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!editingFees && (
+                        <div className="flex items-center gap-4">
+                          <div className="text-sm">
+                            <span className="font-medium">Fee: </span>
+                            {currentFee.hasOffer && currentFee.offerFee < currentFee.actualFee ? (
+                              <span>
+                                <del className="text-red-600">₹{currentFee.actualFee}</del>{' '}
+                                <span className="text-green-600 font-bold">₹{currentFee.offerFee}</span>
+                              </span>
+                            ) : currentFee.actualFee === 0 ? (
+                              <span className="text-green-600 font-bold">FREE</span>
+                            ) : (
+                              <span className="font-bold">₹{currentFee.actualFee}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </ScrollArea>
         </CardContent>
       </Card>
 
       {/* Image Edit Dialog */}
       <Dialog open={imageDialog.open} onOpenChange={(open) => setImageDialog({ open, category: "" })}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
           <DialogHeader>
             <DialogTitle>Edit Category Image</DialogTitle>
             <DialogDescription>
               Update the image for {categories.find(c => c.value === imageDialog.category)?.label}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Sample Images (Click to use)</Label>
-              <div className="grid grid-cols-3 gap-2">
-                {sampleImages.map((url, index) => (
-                  <div 
-                    key={index} 
-                    className="relative group cursor-pointer" 
-                    onClick={() => setImageUrl(url)}
-                  >
-                    <img 
-                      src={url} 
-                      alt={`Sample ${index + 1}`} 
-                      className="w-full h-24 object-cover rounded border-2 border-transparent group-hover:border-blue-500" 
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded flex items-center justify-center">
-                      <span className="text-white text-xs opacity-0 group-hover:opacity-100">Use This</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {imageUrl && (
+          <ScrollArea className="max-h-[calc(90vh-120px)] w-full">
+            <div className="space-y-4 pr-4">
               <div className="space-y-2">
-                <Label>Preview</Label>
-                <img src={imageUrl} alt="Preview" className="w-full h-40 object-cover rounded border" />
+                <Label>Image URL</Label>
+                <Input
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                />
               </div>
-            )}
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleImageSave} className="flex-1">
-                Save Image
-              </Button>
-              <Button variant="outline" onClick={() => setImageDialog({ open: false, category: "" })}>
-                Cancel
-              </Button>
+              <div className="space-y-2">
+                <Label>Sample Images (Click to use)</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {sampleImages.map((url, index) => (
+                    <div 
+                      key={index} 
+                      className="relative group cursor-pointer" 
+                      onClick={() => setImageUrl(url)}
+                    >
+                      <img 
+                        src={url} 
+                        alt={`Sample ${index + 1}`} 
+                        className="w-full h-20 sm:h-24 object-cover rounded border-2 border-transparent group-hover:border-blue-500" 
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded flex items-center justify-center">
+                        <span className="text-white text-xs opacity-0 group-hover:opacity-100">Use This</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {imageUrl && (
+                <div className="space-y-2">
+                  <Label>Preview</Label>
+                  <img src={imageUrl} alt="Preview" className="w-full h-32 sm:h-40 object-cover rounded border" />
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2 pt-4">
+                <Button onClick={handleImageSave} className="flex-1">
+                  Save Image
+                </Button>
+                <Button variant="outline" onClick={() => setImageDialog({ open: false, category: "" })}>
+                  Cancel
+                </Button>
+              </div>
             </div>
-          </div>
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>
