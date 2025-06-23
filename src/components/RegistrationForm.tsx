@@ -11,11 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Award, Star, Users, TrendingUp, Leaf, Coffee, ShoppingCart } from "lucide-react";
 import QRPaymentCode from "./QRPaymentCode";
 import CategoryPopupModal from "./CategoryPopupModal";
-import { useAdminData } from "@/hooks/useAdminData";
+import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { useAuth } from "@/hooks/useAuth";
+import AuthModal from "./auth/AuthModal";
 
 const RegistrationForm = () => {
   const { toast } = useToast();
-  const { categoryFees, panchayaths } = useAdminData();
+  const { user } = useAuth();
+  const { categories, panchayaths, createRegistration } = useSupabaseData();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     mobileNumber: "",
@@ -31,6 +35,7 @@ const RegistrationForm = () => {
   const [showCategoryPopup, setShowCategoryPopup] = useState(false);
   const [selectedCategoryForPopup, setSelectedCategoryForPopup] = useState<any>(null);
 
+  // Transform categories for display
   const pennyekartCategories = [
     {
       value: "pennyekart-free",
@@ -88,12 +93,16 @@ const RegistrationForm = () => {
   };
 
   const getCategoryFees = (category: string) => {
-    const fee = categoryFees.find(f => f.category === category);
-    if (fee) {
-      return fee;
+    const cat = categories.find(c => c.name === category);
+    if (cat) {
+      return {
+        actualFee: cat.actual_fee,
+        offerFee: cat.offer_fee,
+        hasOffer: cat.has_offer
+      };
     }
     
-    // Fallback to default fees if not found in admin data
+    // Fallback to default fees
     const feeStructure = {
       'pennyekart-free': { actualFee: 0, offerFee: 0, hasOffer: false },
       'pennyekart-paid': { actualFee: 800, offerFee: 300, hasOffer: true },
@@ -131,6 +140,12 @@ const RegistrationForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     setIsSubmitting(true);
 
     // Validate required fields
@@ -168,55 +183,34 @@ const RegistrationForm = () => {
     }
 
     try {
-      // Check for duplicate mobile number
-      const existingData = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
-      const isDuplicate = existingData.some((registration: any) => 
-        registration.mobileNumber === formData.mobileNumber
-      );
-
-      if (isDuplicate) {
-        toast({
-          title: "Registration Already Exists",
-          description: "This mobile number is already registered. Each mobile number can only be used once.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
       const tempUniqueId = generateTempUniqueId(formData.mobileNumber, formData.fullName);
 
-      // Create registration record
-      const registration = {
-        id: Date.now().toString(),
-        ...formData,
+      // Create registration using Supabase
+      const registration = await createRegistration({
+        full_name: formData.fullName,
+        mobile_number: formData.mobileNumber,
+        whatsapp_number: formData.whatsappNumber,
+        address: formData.address,
+        panchayath_details: formData.panchayathDetails,
+        category: formData.category,
         status: 'pending',
-        submittedAt: new Date().toISOString(),
-        approvedAt: null,
-        uniqueId: null
-      };
-
-      // Save to localStorage (in a real app, this would be sent to a backend)
-      const updatedRegistrations = [...existingData, registration];
-      localStorage.setItem('sedp_registrations', JSON.stringify(updatedRegistrations));
-
-      setGeneratedUniqueId(tempUniqueId);
-      setIsSubmitted(true);
-      
-      toast({
-        title: "Registration Submitted Successfully!",
-        description: "Your application has been submitted for review. You will be notified once it's approved."
+        unique_id: null
       });
 
-      // Reset form
-      setFormData({
-        fullName: "",
-        mobileNumber: "",
-        whatsappNumber: "",
-        address: "",
-        panchayathDetails: "",
-        category: ""
-      });
+      if (registration) {
+        setGeneratedUniqueId(tempUniqueId);
+        setIsSubmitted(true);
+        
+        // Reset form
+        setFormData({
+          fullName: "",
+          mobileNumber: "",
+          whatsappNumber: "",
+          address: "",
+          panchayathDetails: "",
+          category: ""
+        });
+      }
     } catch (error) {
       console.error('Registration error:', error);
       toast({
@@ -364,10 +358,10 @@ const RegistrationForm = () => {
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {panchayaths.map((panchayath) => (
-                        <SelectItem key={panchayath.id} value={panchayath.malayalamName}>
+                        <SelectItem key={panchayath.id} value={panchayath.malayalam_name}>
                           <div className="flex flex-col">
-                            <span className="font-medium">{panchayath.malayalamName}</span>
-                            <span className="text-xs text-gray-500">{panchayath.englishName}</span>
+                            <span className="font-medium">{panchayath.malayalam_name}</span>
+                            <span className="text-xs text-gray-500">{panchayath.english_name}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -583,7 +577,7 @@ const RegistrationForm = () => {
                 className="w-full bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-lg py-6"
                 disabled={isSubmitting || !declarationAccepted}
               >
-                {isSubmitting ? "Submitting Registration..." : "Submit Registration"}
+                {!user ? "Sign In to Submit Registration" : isSubmitting ? "Submitting Registration..." : "Submit Registration"}
               </Button>
             </form>
           </CardContent>
@@ -603,6 +597,12 @@ const RegistrationForm = () => {
           onConfirm={handleCategoryConfirm}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal 
+        isOpen={showAuthModal} 
+        onClose={() => setShowAuthModal(false)} 
+      />
     </>
   );
 };

@@ -1,108 +1,109 @@
-import { useState, useEffect } from "react";
-import { Registration, CategoryFee, categories, Panchayath, Announcement, PhotoGallery, PushNotification } from "@/types/admin";
 
+import { useSupabaseData } from './useSupabaseData';
+import { categories as staticCategories } from '@/types/admin';
+
+// Legacy adapter for backwards compatibility
 export const useAdminData = () => {
-  const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [categoryFees, setCategoryFees] = useState<CategoryFee[]>([]);
-  const [panchayaths, setPanchayaths] = useState<Panchayath[]>([]);
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [photoGallery, setPhotoGallery] = useState<PhotoGallery[]>([]);
-  const [notifications, setNotifications] = useState<PushNotification[]>([]);
+  const {
+    registrations: supabaseRegistrations,
+    categories: supabaseCategories,
+    panchayaths: supabasePanchayaths,
+    announcements: supabaseAnnouncements,
+    photoGallery: supabasePhotoGallery,
+    notifications: supabaseNotifications,
+    loading,
+    createRegistration,
+    updateRegistrationStatus,
+    deleteRegistration,
+    refreshData,
+  } = useSupabaseData();
 
-  useEffect(() => {
-    // Load registrations
-    const data = JSON.parse(localStorage.getItem('sedp_registrations') || '[]');
-    setRegistrations(data);
+  // Transform Supabase data to match the expected format
+  const registrations = supabaseRegistrations.map(reg => ({
+    id: reg.id,
+    fullName: reg.full_name,
+    mobileNumber: reg.mobile_number,
+    whatsappNumber: reg.whatsapp_number,
+    address: reg.address,
+    panchayathDetails: reg.panchayath_details,
+    category: reg.category,
+    status: reg.status,
+    submittedAt: reg.submitted_at,
+    approvedAt: reg.approved_at,
+    uniqueId: reg.unique_id,
+  }));
 
-    // Load category fees with proper defaults
-    const fees = JSON.parse(localStorage.getItem('sedp_category_fees') || '[]');
-    if (fees.length === 0) {
-      const defaultFees = categories.map(cat => ({
-        category: cat.value,
-        actualFee: cat.value === 'pennyekart-free' ? 0 : cat.value === 'job-card' ? 2000 : 1000,
-        offerFee: cat.value === 'pennyekart-free' ? 0 : cat.value === 'job-card' ? 800 : 400,
-        hasOffer: cat.value !== 'pennyekart-free',
-        image: getDefaultCategoryImage(cat.value)
-      }));
-      setCategoryFees(defaultFees);
-      localStorage.setItem('sedp_category_fees', JSON.stringify(defaultFees));
-    } else {
-      setCategoryFees(fees);
-    }
+  const categoryFees = supabaseCategories.map(cat => ({
+    category: cat.name,
+    actualFee: cat.actual_fee,
+    offerFee: cat.offer_fee,
+    hasOffer: cat.has_offer,
+    image: cat.image_url,
+  }));
 
-    // Load panchayaths
-    const panchayathData = JSON.parse(localStorage.getItem('sedp_panchayaths') || '[]');
-    if (panchayathData.length === 0) {
-      // Import default panchayaths from JSON
-      import('@/data/panchayaths.json').then(data => {
-        const defaultPanchayaths = data.default.map((p: any, index: number) => ({
-          id: (index + 1).toString(),
-          malayalamName: p.panchayath,
-          englishName: p.english,
-          pincode: p.pincode || '',
-          district: 'Malappuram'
-        }));
-        setPanchayaths(defaultPanchayaths);
-        localStorage.setItem('sedp_panchayaths', JSON.stringify(defaultPanchayaths));
-      });
-    } else {
-      setPanchayaths(panchayathData);
-    }
+  const panchayaths = supabasePanchayaths.map(p => ({
+    id: p.id,
+    malayalamName: p.malayalam_name,
+    englishName: p.english_name,
+    pincode: p.pincode || '',
+    district: p.district,
+  }));
 
-    // Load announcements
-    const announcementData = JSON.parse(localStorage.getItem('sedp_announcements') || '[]');
-    setAnnouncements(announcementData);
+  const announcements = supabaseAnnouncements.map(ann => ({
+    id: ann.id,
+    title: ann.title,
+    content: ann.content,
+    link: ann.link,
+    createdAt: ann.created_at,
+    isActive: ann.is_active,
+    category: ann.category,
+  }));
 
-    // Load photo gallery
-    const galleryData = JSON.parse(localStorage.getItem('sedp_gallery') || '[]');
-    setPhotoGallery(galleryData);
+  const photoGallery = supabasePhotoGallery.map(photo => ({
+    id: photo.id,
+    title: photo.title,
+    imageUrl: photo.image_url,
+    description: photo.description,
+    category: photo.category,
+    uploadedAt: photo.uploaded_at,
+  }));
 
-    // Load notifications
-    const notificationData = JSON.parse(localStorage.getItem('sedp_notifications') || '[]');
-    setNotifications(notificationData);
-  }, []);
+  const notifications = supabaseNotifications.map(notif => ({
+    id: notif.id,
+    title: notif.title,
+    content: notif.content,
+    targetAudience: notif.target_audience,
+    targetValue: notif.target_value,
+    scheduledAt: notif.scheduled_at,
+    sentAt: notif.sent_at,
+    isActive: notif.is_active,
+    createdAt: notif.created_at,
+  }));
 
-  const getDefaultCategoryImage = (categoryValue: string) => {
-    const images = {
-      'pennyekart-free': 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'pennyekart-paid': 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'farmelife': 'https://images.pexels.com/photos/974314/pexels-photo-974314.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'foodelife': 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'organelife': 'https://images.pexels.com/photos/1300972/pexels-photo-1300972.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'entrelife': 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      'job-card': 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=800'
-    };
-    return images[categoryValue as keyof typeof images] || images['job-card'];
+  // Legacy update functions (now no-ops or minimal implementations)
+  const updateRegistrations = async (newRegistrations: any[]) => {
+    // This is handled by Supabase now
+    console.log('Legacy updateRegistrations called - use Supabase methods instead');
   };
 
-  const updateRegistrations = (newRegistrations: Registration[]) => {
-    setRegistrations(newRegistrations);
-    localStorage.setItem('sedp_registrations', JSON.stringify(newRegistrations));
+  const updateCategoryFees = async (newFees: any[]) => {
+    console.log('Legacy updateCategoryFees called - use Supabase methods instead');
   };
 
-  const updateCategoryFees = (newFees: CategoryFee[]) => {
-    setCategoryFees(newFees);
-    localStorage.setItem('sedp_category_fees', JSON.stringify(newFees));
+  const updatePanchayaths = async (newPanchayaths: any[]) => {
+    console.log('Legacy updatePanchayaths called - use Supabase methods instead');
   };
 
-  const updatePanchayaths = (newPanchayaths: Panchayath[]) => {
-    setPanchayaths(newPanchayaths);
-    localStorage.setItem('sedp_panchayaths', JSON.stringify(newPanchayaths));
+  const updateAnnouncements = async (newAnnouncements: any[]) => {
+    console.log('Legacy updateAnnouncements called - use Supabase methods instead');
   };
 
-  const updateAnnouncements = (newAnnouncements: Announcement[]) => {
-    setAnnouncements(newAnnouncements);
-    localStorage.setItem('sedp_announcements', JSON.stringify(newAnnouncements));
+  const updatePhotoGallery = async (newGallery: any[]) => {
+    console.log('Legacy updatePhotoGallery called - use Supabase methods instead');
   };
 
-  const updatePhotoGallery = (newGallery: PhotoGallery[]) => {
-    setPhotoGallery(newGallery);
-    localStorage.setItem('sedp_gallery', JSON.stringify(newGallery));
-  };
-
-  const updateNotifications = (newNotifications: PushNotification[]) => {
-    setNotifications(newNotifications);
-    localStorage.setItem('sedp_notifications', JSON.stringify(newNotifications));
+  const updateNotifications = async (newNotifications: any[]) => {
+    console.log('Legacy updateNotifications called - use Supabase methods instead');
   };
 
   return {
@@ -112,11 +113,17 @@ export const useAdminData = () => {
     announcements,
     photoGallery,
     notifications,
+    loading,
     updateRegistrations,
     updateCategoryFees,
     updatePanchayaths,
     updateAnnouncements,
     updatePhotoGallery,
-    updateNotifications
+    updateNotifications,
+    // Expose new Supabase methods
+    createRegistration,
+    updateRegistrationStatus,
+    deleteRegistration,
+    refreshData,
   };
 };
