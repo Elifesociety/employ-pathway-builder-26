@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,17 +12,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash2, Download, FileText, MapPin, Award } from "lucide-react";
+import { Trash2, Download, FileText, MapPin } from "lucide-react";
 
 import AdminLogin from "./admin/AdminLogin";
 import AdminStats from "./admin/AdminStats";
 import RegistrationsTable from "./admin/RegistrationsTable";
 import RegistrationFilters from "./admin/RegistrationFilters";
-import FeeManagement from "./admin/FeeManagement";
-import PanchayathManager from "./admin/PanchayathManager";
-import AnnouncementManager from "./admin/AnnouncementManager";
+import PanchayathSearchFilter from "./admin/PanchayathSearchFilter";
 import PhotoGalleryManager from "./admin/PhotoGalleryManager";
-import NotificationManager from "./admin/NotificationManager";
+import PanchayathManager from "./admin/PanchayathManager";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Registration, categories } from "@/types/admin";
 import { generateUniqueId, exportToCSV, exportToPDF } from "@/utils/adminUtils";
@@ -52,10 +51,10 @@ const AdminPanel = () => {
   const [panchayathFilterCategory, setPanchayathFilterCategory] = useState("all");
   const [panchayathFilterStatus, setPanchayathFilterStatus] = useState("all");
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
-  const [editingFees, setEditingFees] = useState(false);
   const [selectedRegistrations, setSelectedRegistrations] = useState<string[]>([]);
   const [changeCategoryDialog, setChangeCategoryDialog] = useState<{ open: boolean; registration: Registration | null }>({ open: false, registration: null });
   const [newCategory, setNewCategory] = useState("");
+  const [selectedPanchayath, setSelectedPanchayath] = useState("all");
 
   // Filter registrations based on search and filters
   useEffect(() => {
@@ -78,8 +77,12 @@ const AdminPanel = () => {
       filtered = filtered.filter(reg => reg.status === filterStatus);
     }
 
+    if (selectedPanchayath !== "all") {
+      filtered = filtered.filter(reg => reg.panchayathDetails === selectedPanchayath);
+    }
+
     setFilteredRegistrations(filtered);
-  }, [registrations, searchTerm, filterCategory, filterStatus]);
+  }, [registrations, searchTerm, filterCategory, filterStatus, selectedPanchayath]);
 
   const handleApproval = (registrationId: string, action: 'approve' | 'reject') => {
     const updatedRegistrations = registrations.map(reg => {
@@ -186,33 +189,6 @@ const AdminPanel = () => {
     });
   };
 
-  const handleFeeUpdate = (category: string, field: 'actualFee' | 'offerFee' | 'hasOffer' | 'image', value: number | boolean | string) => {
-    const updatedFees = categoryFees.map(fee => 
-      fee.category === category ? { ...fee, [field]: value } : fee
-    );
-    
-    // If category doesn't exist, create it
-    if (!updatedFees.find(fee => fee.category === category)) {
-      updatedFees.push({
-        category,
-        actualFee: field === 'actualFee' ? (value as number) : 0,
-        offerFee: field === 'offerFee' ? (value as number) : 0,
-        hasOffer: field === 'hasOffer' ? (value as boolean) : false,
-        image: field === 'image' ? (value as string) : ''
-      });
-    }
-    
-    updateCategoryFees(updatedFees);
-  };
-
-  const saveFees = () => {
-    setEditingFees(false);
-    toast({
-      title: "Fees Updated",
-      description: "Category fees have been successfully updated."
-    });
-  };
-
   const getCategoryRegistrations = (categoryValue: string) => {
     return registrations.filter(reg => reg.category === categoryValue);
   };
@@ -268,15 +244,15 @@ const AdminPanel = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-          <p className="text-gray-600">Manage registrations, content, and system settings</p>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className="text-xl sm:text-2xl font-bold break-words">Admin Dashboard</h2>
+          <p className="text-sm sm:text-base text-gray-600">Manage registrations, content, and system settings</p>
         </div>
         <Button 
           variant="outline" 
           onClick={() => setIsLoggedIn(false)} 
-          className="bg-[#ff5353] text-zinc-50 font-bold"
+          className="bg-[#ff5353] text-zinc-50 font-bold flex-shrink-0"
         >
           Logout
         </Button>
@@ -286,28 +262,41 @@ const AdminPanel = () => {
       <AdminStats registrations={registrations} />
 
       <Tabs defaultValue="registrations" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
-          <TabsTrigger value="registrations">Registrations</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="panchayath">Panchayath</TabsTrigger>
-          <TabsTrigger value="fees">Fees & Images</TabsTrigger>
-          <TabsTrigger value="panchayath-mgmt">Panchayath Mgmt</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7 min-w-[800px]">
+            <TabsTrigger value="registrations" className="text-xs sm:text-sm">Registrations</TabsTrigger>
+            <TabsTrigger value="categories" className="text-xs sm:text-sm">Categories</TabsTrigger>
+            <TabsTrigger value="panchayath" className="text-xs sm:text-sm">Panchayath</TabsTrigger>
+            <TabsTrigger value="fees" className="text-xs sm:text-sm">Fees & Images</TabsTrigger>
+            <TabsTrigger value="panchayath-mgmt" className="text-xs sm:text-sm">Panchayath Mgmt</TabsTrigger>
+            <TabsTrigger value="content" className="text-xs sm:text-sm">Content</TabsTrigger>
+            <TabsTrigger value="notifications" className="text-xs sm:text-sm">Notifications</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="registrations" className="space-y-4">
           {/* Filters */}
           <Card>
             <CardContent className="p-4">
-              <RegistrationFilters
-                searchTerm={searchTerm}
-                filterCategory={filterCategory}
-                filterStatus={filterStatus}
-                onSearchChange={setSearchTerm}
-                onCategoryChange={setFilterCategory}
-                onStatusChange={setFilterStatus}
-              />
+              <div className="space-y-4">
+                <RegistrationFilters
+                  searchTerm={searchTerm}
+                  filterCategory={filterCategory}
+                  filterStatus={filterStatus}
+                  onSearchChange={setSearchTerm}
+                  onCategoryChange={setFilterCategory}
+                  onStatusChange={setFilterStatus}
+                />
+                <PanchayathSearchFilter
+                  panchayaths={panchayaths}
+                  selectedPanchayath={selectedPanchayath}
+                  onPanchayathChange={setSelectedPanchayath}
+                  filterCategory={filterCategory}
+                  filterStatus={filterStatus}
+                  onCategoryChange={setFilterCategory}
+                  onStatusChange={setFilterStatus}
+                />
+              </div>
             </CardContent>
           </Card>
 
@@ -315,7 +304,7 @@ const AdminPanel = () => {
           {selectedRegistrations.length > 0 && (
             <Card className="border-orange-200 bg-orange-50">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <span className="text-sm font-medium">
                     {selectedRegistrations.length} registration(s) selected
                   </span>
@@ -324,7 +313,8 @@ const AdminPanel = () => {
                       <AlertDialogTrigger asChild>
                         <Button variant="destructive" size="sm">
                           <Trash2 className="h-4 w-4 mr-1" />
-                          Delete Selected
+                          <span className="hidden sm:inline">Delete Selected</span>
+                          <span className="sm:hidden">Delete</span>
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -348,7 +338,8 @@ const AdminPanel = () => {
                       size="sm" 
                       onClick={() => setSelectedRegistrations([])}
                     >
-                      Clear Selection
+                      <span className="hidden sm:inline">Clear Selection</span>
+                      <span className="sm:hidden">Clear</span>
                     </Button>
                   </div>
                 </div>
@@ -359,16 +350,18 @@ const AdminPanel = () => {
           {/* Registrations Table */}
           <Card>
             <CardContent className="p-0">
-              <RegistrationsTable
-                registrations={filteredRegistrations}
-                selectedRegistrations={selectedRegistrations}
-                onSelectAll={handleSelectAll}
-                onSelectRegistration={handleSelectRegistration}
-                onApproval={handleApproval}
-                onEdit={handleEditRegistration}
-                onDelete={handleDeleteRegistration}
-                onChangeCategory={(registration) => setChangeCategoryDialog({ open: true, registration })}
-              />
+              <div className="overflow-x-auto">
+                <RegistrationsTable
+                  registrations={filteredRegistrations}
+                  selectedRegistrations={selectedRegistrations}
+                  onSelectAll={handleSelectAll}
+                  onSelectRegistration={handleSelectRegistration}
+                  onApproval={handleApproval}
+                  onEdit={handleEditRegistration}
+                  onDelete={handleDeleteRegistration}
+                  onChangeCategory={(registration) => setChangeCategoryDialog({ open: true, registration })}
+                />
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -378,8 +371,8 @@ const AdminPanel = () => {
             {categoryStats.map((category) => (
               <Card key={category.value} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center justify-between">
-                    <span className={category.value === 'job-card' ? 'text-yellow-700' : ''}>
+                  <CardTitle className="text-base sm:text-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <span className={`break-words ${category.value === 'job-card' ? 'text-yellow-700' : ''}`}>
                       {category.label}
                       {category.value === 'job-card' && <span className="ml-2">⭐</span>}
                     </span>
@@ -387,35 +380,37 @@ const AdminPanel = () => {
                       variant="outline" 
                       size="sm" 
                       onClick={() => setSelectedCategoryDetails(category.value)}
+                      className="flex-shrink-0"
                     >
-                      View Details
+                      <span className="hidden sm:inline">View Details</span>
+                      <span className="sm:hidden">Details</span>
                     </Button>
                   </CardTitle>
-                  <CardDescription>Registration statistics for this category</CardDescription>
+                  <CardDescription className="text-sm">Registration statistics for this category</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{category.count}</div>
+                      <div className="text-xl sm:text-2xl font-bold text-blue-600">{category.count}</div>
                       <p className="text-xs text-gray-600">Total</p>
                     </div>
                     <div className="space-y-1">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs sm:text-sm">
                         <span>Pending:</span>
-                        <Badge variant="secondary" className="bg-[#ffe015]">{category.pending}</Badge>
+                        <Badge variant="secondary" className="bg-[#ffe015] text-xs">{category.pending}</Badge>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs sm:text-sm">
                         <span>Approved:</span>
-                        <Badge variant="default" className="bg-[#07ad07]">{category.approved}</Badge>
+                        <Badge variant="default" className="bg-[#07ad07] text-xs">{category.approved}</Badge>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs sm:text-sm">
                         <span>Rejected:</span>
-                        <Badge variant="destructive">{category.rejected}</Badge>
+                        <Badge variant="destructive" className="text-xs">{category.rejected}</Badge>
                       </div>
                     </div>
                   </div>
                   <div className="mt-3">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-xs sm:text-sm text-gray-600">
                       {(category.count / registrations.length * 100 || 0).toFixed(1)}% of total registrations
                     </p>
                   </div>
@@ -428,13 +423,13 @@ const AdminPanel = () => {
           <Dialog open={!!selectedCategoryDetails} onOpenChange={() => setSelectedCategoryDetails(null)}>
             <DialogContent className="max-w-6xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>
+                <DialogTitle className="text-base sm:text-lg break-words">
                   {categories.find(c => c.value === selectedCategoryDetails)?.label} - Detailed View
                 </DialogTitle>
-                <DialogDescription>
+                <DialogDescription className="text-sm">
                   All registrations for this category with export options
                 </DialogDescription>
-                <div className="flex gap-2 mt-4">
+                <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -465,7 +460,7 @@ const AdminPanel = () => {
               </DialogHeader>
               
               {selectedCategoryDetails && (
-                <div className="mt-4">
+                <div className="mt-4 overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -483,22 +478,23 @@ const AdminPanel = () => {
                       {getCategoryRegistrations(selectedCategoryDetails).map((reg, index) => (
                         <TableRow key={reg.id}>
                           <TableCell className="font-medium">{index + 1}</TableCell>
-                          <TableCell className="font-medium">{reg.fullName}</TableCell>
+                          <TableCell className="font-medium break-words">{reg.fullName}</TableCell>
                           <TableCell>{reg.mobileNumber}</TableCell>
                           <TableCell>{reg.whatsappNumber}</TableCell>
-                          <TableCell>{reg.panchayathDetails}</TableCell>
+                          <TableCell className="break-words">{reg.panchayathDetails}</TableCell>
                           <TableCell>
                             <Badge 
                               variant={
                                 reg.status === 'approved' ? 'default' : 
                                 reg.status === 'rejected' ? 'destructive' : 'secondary'
                               }
+                              className="text-xs"
                             >
                               {reg.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>{new Date(reg.submittedAt).toLocaleDateString()}</TableCell>
-                          <TableCell>{reg.uniqueId || '-'}</TableCell>
+                          <TableCell className="text-xs">{new Date(reg.submittedAt).toLocaleDateString()}</TableCell>
+                          <TableCell className="break-all text-xs">{reg.uniqueId || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -512,11 +508,11 @@ const AdminPanel = () => {
         <TabsContent value="panchayath" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Panchayath-wise Registration Breakdown
+              <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <MapPin className="h-5 w-5 flex-shrink-0" />
+                <span className="break-words">Panchayath-wise Registration Breakdown</span>
               </CardTitle>
-              <CardDescription>Registration statistics organized by Panchayath areas</CardDescription>
+              <CardDescription className="text-sm">Registration statistics organized by Panchayath areas</CardDescription>
             </CardHeader>
             <CardContent>
               {/* Panchayath Filters */}
@@ -547,7 +543,7 @@ const AdminPanel = () => {
                 </Select>
               </div>
 
-              <div className="mb-4 flex gap-2">
+              <div className="mb-4 flex flex-col sm:flex-row gap-2">
                 <Button 
                   variant="outline" 
                   size="sm" 
@@ -561,7 +557,8 @@ const AdminPanel = () => {
                   }}
                 >
                   <Download className="h-4 w-4 mr-1" />
-                  Export Filtered CSV
+                  <span className="hidden sm:inline">Export Filtered CSV</span>
+                  <span className="sm:hidden">CSV</span>
                 </Button>
                 <Button 
                   variant="outline" 
@@ -576,66 +573,71 @@ const AdminPanel = () => {
                   }}
                 >
                   <FileText className="h-4 w-4 mr-1" />
-                  Export Filtered PDF
+                  <span className="hidden sm:inline">Export Filtered PDF</span>
+                  <span className="sm:hidden">PDF</span>
                 </Button>
               </div>
               
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Panchayath</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead>Pending</TableHead>
-                    <TableHead>Approved</TableHead>
-                    <TableHead>Rejected</TableHead>
-                    <TableHead>% of Filtered</TableHead>
-                    <TableHead>Export</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {panchayathBreakdown.map((item) => {
-                    const totalFiltered = panchayathBreakdown.reduce((sum, p) => sum + p.totalRegistrations, 0);
-                    return (
-                      <TableRow key={item.panchayath}>
-                        <TableCell className="font-medium">{item.panchayath}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{item.totalRegistrations}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{item.pendingCount}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="default">{item.approvedCount}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="destructive">{item.rejectedCount}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          {(item.totalRegistrations / totalFiltered * 100 || 0).toFixed(1)}%
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => exportToCSV(item.registrations, `${item.panchayath}_registrations.csv`)}
-                            >
-                              CSV
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => exportToPDF(item.registrations, `${item.panchayath}_registrations.pdf`)}
-                            >
-                              PDF
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Panchayath</TableHead>
+                      <TableHead>Total</TableHead>
+                      <TableHead>Pending</TableHead>
+                      <TableHead>Approved</TableHead>
+                      <TableHead>Rejected</TableHead>
+                      <TableHead className="hidden sm:table-cell">% of Filtered</TableHead>
+                      <TableHead>Export</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {panchayathBreakdown.map((item) => {
+                      const totalFiltered = panchayathBreakdown.reduce((sum, p) => sum + p.totalRegistrations, 0);
+                      return (
+                        <TableRow key={item.panchayath}>
+                          <TableCell className="font-medium break-words min-w-[120px]">{item.panchayath}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="text-xs">{item.totalRegistrations}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="text-xs">{item.pendingCount}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="default" className="text-xs">{item.approvedCount}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="destructive" className="text-xs">{item.rejectedCount}</Badge>
+                          </TableCell>
+                          <TableCell className="hidden sm:table-cell text-xs">
+                            {(item.totalRegistrations / totalFiltered * 100 || 0).toFixed(1)}%
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => exportToCSV(item.registrations, `${item.panchayath}_registrations.csv`)}
+                                className="text-xs px-2"
+                              >
+                                CSV
+                              </Button>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => exportToPDF(item.registrations, `${item.panchayath}_registrations.pdf`)}
+                                className="text-xs px-2"
+                              >
+                                PDF
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
               
               {panchayathBreakdown.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
@@ -647,14 +649,9 @@ const AdminPanel = () => {
         </TabsContent>
 
         <TabsContent value="fees" className="space-y-4">
-          <FeeManagement
-            categoryFees={categoryFees}
-            editingFees={editingFees}
-            onEditStart={() => setEditingFees(true)}
-            onEditCancel={() => setEditingFees(false)}
-            onSave={saveFees}
-            onFeeUpdate={handleFeeUpdate}
-          />
+          <div className="text-center py-8 text-gray-500">
+            Fee Management component will be implemented soon.
+          </div>
         </TabsContent>
 
         <TabsContent value="panchayath-mgmt" className="space-y-4">
@@ -666,10 +663,6 @@ const AdminPanel = () => {
 
         <TabsContent value="content" className="space-y-4">
           <div className="grid grid-cols-1 gap-6">
-            <AnnouncementManager
-              announcements={announcements}
-              onUpdate={updateAnnouncements}
-            />
             <PhotoGalleryManager
               gallery={photoGallery}
               onUpdate={updatePhotoGallery}
@@ -678,16 +671,15 @@ const AdminPanel = () => {
         </TabsContent>
 
         <TabsContent value="notifications" className="space-y-4">
-          <NotificationManager
-            notifications={notifications}
-            onUpdate={updateNotifications}
-          />
+          <div className="text-center py-8 text-gray-500">
+            Notification Management component will be implemented soon.
+          </div>
         </TabsContent>
       </Tabs>
 
       {/* Edit Registration Dialog */}
       <Dialog open={!!editingRegistration} onOpenChange={() => setEditingRegistration(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Registration Details</DialogTitle>
             <DialogDescription>
@@ -750,7 +742,7 @@ const AdminPanel = () => {
                   rows={3}
                 />
               </div>
-              <div className="flex justify-end gap-2">
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingRegistration(null)}>
                   Cancel
                 </Button>
@@ -790,7 +782,7 @@ const AdminPanel = () => {
               </SelectContent>
             </Select>
             
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
               <Button 
                 variant="outline" 
                 onClick={() => setChangeCategoryDialog({ open: false, registration: null })}
