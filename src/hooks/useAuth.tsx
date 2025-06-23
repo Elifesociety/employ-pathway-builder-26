@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -37,7 +36,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -47,7 +45,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setLoading(false);
     });
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -70,13 +67,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .eq('role', 'admin')
-        .single();
+        .eq('role', 'admin');
 
-      if (data && !error) {
-        setIsAdmin(true);
-      } else {
+      if (error) {
+        console.error("Supabase error:", error.message);
         setIsAdmin(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        console.log("❌ User is not an admin");
+        setIsAdmin(false);
+      } else {
+        console.log("✅ User is an admin:", data[0].role);
+        setIsAdmin(true);
       }
     } catch (error) {
       console.error('Error checking admin role:', error);
@@ -133,7 +137,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
-    
+
     if (error) {
       toast({
         title: "Sign Out Failed",
