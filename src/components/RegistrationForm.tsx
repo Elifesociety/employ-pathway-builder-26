@@ -567,7 +567,7 @@ const RegistrationForm = () => {
                         <Checkbox 
                           id="declaration" 
                           checked={declarationAccepted}
-                          onCheckedChange={(checke) => setDeclarationAccepted(!!checked)}
+                          onCheckedChange={(checked) => setDeclarationAccepted(!!checked)}
                         />
                         <Label htmlFor="declaration" className="text-sm text-gray-700 leading-relaxed">
                           I have read and agree to the above declaration and terms
