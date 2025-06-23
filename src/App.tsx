@@ -30,5 +30,25 @@ const App = () => (
     </AuthProvider>
   </QueryClientProvider>
 );
+async function checkIfAdmin(userId) {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', 'admin');
+
+  if (error) {
+    console.error("Supabase error:", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    alert("You don't have permission to access the admin panel.");
+    return false;
+  }
+
+  console.log("✅ Admin access granted");
+  return true;
+}
 
 export default App;
