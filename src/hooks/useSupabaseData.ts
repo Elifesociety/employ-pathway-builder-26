@@ -146,7 +146,12 @@ export const useSupabaseData = () => {
             .order('created_at', { ascending: false });
           
           if (notificationsError) throw notificationsError;
-          setNotifications(notificationsData || []);
+          // Filter and validate target_audience values
+          const validNotifications = (notificationsData || []).filter(
+            (notif): notif is PushNotification => 
+              ['all', 'category', 'panchayath', 'admin'].includes(notif.target_audience)
+          );
+          setNotifications(validNotifications);
         }
       }
     } catch (error) {

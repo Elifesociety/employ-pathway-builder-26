@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import NavBar from "@/components/NavBar";
 import Index from "./pages/Index";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
             <NavBar />
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </div>
         </BrowserRouter>

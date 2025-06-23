@@ -169,12 +169,14 @@ const AdminPanel = () => {
     if (!registration) return;
 
     let uniqueId = undefined;
+    const status = action === 'approve' ? 'approved' : 'rejected';
+    
     if (action === 'approve') {
       const firstLetter = registration.fullName.charAt(0).toUpperCase();
       uniqueId = `ESP${registration.mobileNumber}${firstLetter}`;
     }
 
-    await updateRegistrationStatus(id, action, uniqueId);
+    await updateRegistrationStatus(id, status, uniqueId);
   };
 
   const handleEdit = (registration: any) => {
@@ -251,7 +253,6 @@ const AdminPanel = () => {
         <TabsContent value="fees">
           <FeeManagement 
             categoryFees={legacyCategoryFees}
-            onUpdate={() => refreshData()}
           />
         </TabsContent>
 
