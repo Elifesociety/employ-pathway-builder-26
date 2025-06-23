@@ -1,4 +1,3 @@
-
 export interface Registration {
   id: string;
   fullName: string;
@@ -19,6 +18,45 @@ export interface CategoryFee {
   offerFee: number;
   hasOffer: boolean;
   image?: string;
+}
+
+export interface Panchayath {
+  id: string;
+  malayalamName: string;
+  englishName: string;
+  pincode: string;
+  district: string;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  link?: string;
+  createdAt: string;
+  isActive: boolean;
+  category?: string;
+}
+
+export interface PhotoGallery {
+  id: string;
+  title: string;
+  imageUrl: string;
+  description?: string;
+  category: string;
+  uploadedAt: string;
+}
+
+export interface PushNotification {
+  id: string;
+  title: string;
+  content: string;
+  targetAudience: 'all' | 'category' | 'panchayath' | 'admin';
+  targetValue?: string;
+  scheduledAt?: string;
+  sentAt?: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export const categories = [

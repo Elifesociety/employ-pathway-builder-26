@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Download, X, Star, Award } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminData } from "@/hooks/useAdminData";
 
 interface CategoryPopupModalProps {
   isOpen: boolean;
@@ -20,16 +21,24 @@ interface CategoryPopupModalProps {
     actualFee: number;
     offerFee: number;
     hasOffer: boolean;
+    image?: string;
   };
   onConfirm: () => void;
 }
 
 const CategoryPopupModal = ({ isOpen, onClose, category, fees, onConfirm }: CategoryPopupModalProps) => {
   const { toast } = useToast();
+  const { categoryFees } = useAdminData();
   const [imageLoaded, setImageLoaded] = useState(false);
 
-  // Mock category images - in production, these would come from admin uploads
+  // Get the actual image from admin data
   const getCategoryImage = (categoryValue: string) => {
+    const adminFee = categoryFees.find(f => f.category === categoryValue);
+    if (adminFee && adminFee.image) {
+      return adminFee.image;
+    }
+    
+    // Fallback to default images
     const images = {
       'pennyekart-free': 'https://images.pexels.com/photos/230544/pexels-photo-230544.jpeg?auto=compress&cs=tinysrgb&w=800',
       'pennyekart-paid': 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800',

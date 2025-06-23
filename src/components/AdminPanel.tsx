@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,6 +18,10 @@ import AdminStats from "./admin/AdminStats";
 import RegistrationsTable from "./admin/RegistrationsTable";
 import RegistrationFilters from "./admin/RegistrationFilters";
 import FeeManagement from "./admin/FeeManagement";
+import PanchayathManager from "./admin/PanchayathManager";
+import AnnouncementManager from "./admin/AnnouncementManager";
+import PhotoGalleryManager from "./admin/PhotoGalleryManager";
+import NotificationManager from "./admin/NotificationManager";
 import { useAdminData } from "@/hooks/useAdminData";
 import { Registration, categories } from "@/types/admin";
 import { generateUniqueId, exportToCSV, exportToPDF } from "@/utils/adminUtils";
@@ -26,7 +29,21 @@ import { generateUniqueId, exportToCSV, exportToPDF } from "@/utils/adminUtils";
 const AdminPanel = () => {
   const { toast } = useToast();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const { registrations, categoryFees, updateRegistrations, updateCategoryFees } = useAdminData();
+  const { 
+    registrations, 
+    categoryFees, 
+    panchayaths, 
+    announcements, 
+    photoGallery, 
+    notifications,
+    updateRegistrations, 
+    updateCategoryFees,
+    updatePanchayaths,
+    updateAnnouncements,
+    updatePhotoGallery,
+    updateNotifications
+  } = useAdminData();
+  
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -169,10 +186,22 @@ const AdminPanel = () => {
     });
   };
 
-  const handleFeeUpdate = (category: string, field: 'actualFee' | 'offerFee' | 'hasOffer', value: number | boolean) => {
+  const handleFeeUpdate = (category: string, field: 'actualFee' | 'offerFee' | 'hasOffer' | 'image', value: number | boolean | string) => {
     const updatedFees = categoryFees.map(fee => 
       fee.category === category ? { ...fee, [field]: value } : fee
     );
+    
+    // If category doesn't exist, create it
+    if (!updatedFees.find(fee => fee.category === category)) {
+      updatedFees.push({
+        category,
+        actualFee: field === 'actualFee' ? (value as number) : 0,
+        offerFee: field === 'offerFee' ? (value as number) : 0,
+        hasOffer: field === 'hasOffer' ? (value as boolean) : false,
+        image: field === 'image' ? (value as string) : ''
+      });
+    }
+    
     updateCategoryFees(updatedFees);
   };
 
@@ -242,7 +271,7 @@ const AdminPanel = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Admin Dashboard</h2>
-          <p className="text-gray-600">Manage registrations and approvals</p>
+          <p className="text-gray-600">Manage registrations, content, and system settings</p>
         </div>
         <Button 
           variant="outline" 
@@ -257,11 +286,14 @@ const AdminPanel = () => {
       <AdminStats registrations={registrations} />
 
       <Tabs defaultValue="registrations" className="w-full">
-        <TabsList>
-          <TabsTrigger value="registrations">All Registrations</TabsTrigger>
-          <TabsTrigger value="categories">Category Breakdown</TabsTrigger>
-          <TabsTrigger value="panchayath">Panchayath Breakdown</TabsTrigger>
-          <TabsTrigger value="fees">Fee Management</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="registrations">Registrations</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="panchayath">Panchayath</TabsTrigger>
+          <TabsTrigger value="fees">Fees & Images</TabsTrigger>
+          <TabsTrigger value="panchayath-mgmt">Panchayath Mgmt</TabsTrigger>
+          <TabsTrigger value="content">Content</TabsTrigger>
+          <TabsTrigger value="notifications">Notifications</TabsTrigger>
         </TabsList>
 
         <TabsContent value="registrations" className="space-y-4">
@@ -622,6 +654,33 @@ const AdminPanel = () => {
             onEditCancel={() => setEditingFees(false)}
             onSave={saveFees}
             onFeeUpdate={handleFeeUpdate}
+          />
+        </TabsContent>
+
+        <TabsContent value="panchayath-mgmt" className="space-y-4">
+          <PanchayathManager
+            panchayaths={panchayaths}
+            onUpdate={updatePanchayaths}
+          />
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-4">
+          <div className="grid grid-cols-1 gap-6">
+            <AnnouncementManager
+              announcements={announcements}
+              onUpdate={updateAnnouncements}
+            />
+            <PhotoGalleryManager
+              gallery={photoGallery}
+              onUpdate={updatePhotoGallery}
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="space-y-4">
+          <NotificationManager
+            notifications={notifications}
+            onUpdate={updateNotifications}
           />
         </TabsContent>
       </Tabs>

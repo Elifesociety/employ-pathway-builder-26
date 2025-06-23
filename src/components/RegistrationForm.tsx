@@ -11,10 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Award, Star, Users, TrendingUp, Leaf, Coffee, ShoppingCart } from "lucide-react";
 import QRPaymentCode from "./QRPaymentCode";
 import CategoryPopupModal from "./CategoryPopupModal";
-import panchayathsData from "@/data/panchayaths.json";
+import { useAdminData } from "@/hooks/useAdminData";
 
 const RegistrationForm = () => {
   const { toast } = useToast();
+  const { categoryFees, panchayaths } = useAdminData();
   const [formData, setFormData] = useState({
     fullName: "",
     mobileNumber: "",
@@ -87,7 +88,12 @@ const RegistrationForm = () => {
   };
 
   const getCategoryFees = (category: string) => {
-    // Mock fee data - in production, this would come from admin settings
+    const fee = categoryFees.find(f => f.category === category);
+    if (fee) {
+      return fee;
+    }
+    
+    // Fallback to default fees if not found in admin data
     const feeStructure = {
       'pennyekart-free': { actualFee: 0, offerFee: 0, hasOffer: false },
       'pennyekart-paid': { actualFee: 800, offerFee: 300, hasOffer: true },
@@ -225,7 +231,7 @@ const RegistrationForm = () => {
 
   const allCategories = [...pennyekartCategories, ...elifeCategories];
   const selectedCategory = [...allCategories, jobCardCategory].find(cat => cat.value === formData.category);
-  const categoryFees = formData.category ? getCategoryFees(formData.category) : { actualFee: 0, offerFee: 0, hasOffer: false };
+  const categoryFeesData = formData.category ? getCategoryFees(formData.category) : { actualFee: 0, offerFee: 0, hasOffer: false };
 
   if (isSubmitted) {
     return (
@@ -249,14 +255,14 @@ const RegistrationForm = () => {
                 <div>
                   <p><strong>Panchayath:</strong> {formData.panchayathDetails}</p>
                   <p><strong>Reference ID:</strong> <Badge variant="outline">{generatedUniqueId}</Badge></p>
-                  <p><strong>Registration Fee:</strong> {categoryFees.offerFee === 0 ? 'FREE' : `₹${categoryFees.offerFee}`}</p>
+                  <p><strong>Registration Fee:</strong> {categoryFeesData.offerFee === 0 ? 'FREE' : `₹${categoryFeesData.offerFee}`}</p>
                 </div>
               </div>
             </div>
 
-            {categoryFees.offerFee > 0 && (
+            {categoryFeesData.offerFee > 0 && (
               <QRPaymentCode 
-                amount={categoryFees.offerFee} 
+                amount={categoryFeesData.offerFee} 
                 category={selectedCategory?.label || ''} 
                 uniqueId={generatedUniqueId} 
               />
@@ -266,7 +272,7 @@ const RegistrationForm = () => {
               <h4 className="font-semibold text-blue-800 mb-2">Next Steps:</h4>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Keep your reference ID safe for future communication</li>
-                {categoryFees.offerFee > 0 && <li>• Complete payment using the QR code above</li>}
+                {categoryFeesData.offerFee > 0 && <li>• Complete payment using the QR code above</li>}
                 <li>• You will receive updates via WhatsApp on your registered number</li>
                 <li>• Check your application status using the "Check Status" section</li>
                 <li>• Contact support for any queries: +91 9876543210</li>
@@ -357,11 +363,11 @@ const RegistrationForm = () => {
                       <SelectValue placeholder="Select your Panchayath" />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {panchayathsData.map((panchayath) => (
-                        <SelectItem key={panchayath.english} value={panchayath.panchayath}>
+                      {panchayaths.map((panchayath) => (
+                        <SelectItem key={panchayath.id} value={panchayath.malayalamName}>
                           <div className="flex flex-col">
-                            <span className="font-medium">{panchayath.panchayath}</span>
-                            <span className="text-xs text-gray-500">{panchayath.english}</span>
+                            <span className="font-medium">{panchayath.malayalamName}</span>
+                            <span className="text-xs text-gray-500">{panchayath.englishName}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -518,15 +524,15 @@ const RegistrationForm = () => {
                           <div className="text-right">
                             <p className="text-sm font-semibold">
                               Registration Fee: {
-                                categoryFees.hasOffer && categoryFees.offerFee < categoryFees.actualFee ? (
+                                categoryFeesData.hasOffer && categoryFeesData.offerFee < categoryFeesData.actualFee ? (
                                   <span>
-                                    <del className="text-red-600">₹{categoryFees.actualFee}</del>{' '}
-                                    <span className="text-green-600">₹{categoryFees.offerFee}</span>
+                                    <del className="text-red-600">₹{categoryFeesData.actualFee}</del>{' '}
+                                    <span className="text-green-600">₹{categoryFeesData.offerFee}</span>
                                   </span>
-                                ) : categoryFees.actualFee === 0 ? (
+                                ) : categoryFeesData.actualFee === 0 ? (
                                   <span className="text-green-600">FREE</span>
                                 ) : (
-                                  <span className="text-blue-600">₹{categoryFees.actualFee}</span>
+                                  <span className="text-blue-600">₹{categoryFeesData.actualFee}</span>
                                 )
                               }
                             </p>
@@ -553,15 +559,15 @@ const RegistrationForm = () => {
                         <li>• I understand that providing false information may lead to rejection of my application</li>
                         <li>• I agree to abide by the program terms and conditions</li>
                         <li>• I consent to receive updates and communications via the provided contact details</li>
-                        {categoryFees.offerFee > 0 && (
-                          <li>• I understand that a registration fee of ₹{categoryFees.offerFee} is required to complete the process</li>
+                        {categoryFeesData.offerFee > 0 && (
+                          <li>• I understand that a registration fee of ₹{categoryFeesData.offerFee} is required to complete the process</li>
                         )}
                       </ul>
                       <div className="flex items-start space-x-2">
                         <Checkbox 
                           id="declaration" 
                           checked={declarationAccepted}
-                          onCheckedChange={(checked) => setDeclarationAccepted(!!checked)}
+                          onCheckedChange={(checke) => setDeclarationAccepted(!!checked)}
                         />
                         <Label htmlFor="declaration" className="text-sm text-gray-700 leading-relaxed">
                           I have read and agree to the above declaration and terms
